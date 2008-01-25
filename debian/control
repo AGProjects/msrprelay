@@ -10,5 +10,8 @@ Package: msrprelay
 Architecture: all
 Depends: ${python:Depends}, python-twisted (>= 2.5.0), python-application (>= 1.0.9), python-gnutls (>= 1.1.5), python-sqlobject (>= 0.9.3)
 XB-Python-Version: ${python:Versions}
-Description: MSRP Relay, a RFC 4976 compatible IM relay
- A MSRP Relay daemon that helps in performing MSRP sessions through NAT.
+Description: MSRP Relay, a RFC 4976 compatible IM/File transfer relay 
+ This software implements an MSRP relay, which is an extension to the MSRP
+ protocol (RFC 4975). Its main role is to help NAT traversal of Interactive
+ Messaging and file transfer sessions for SIP/MSRP endpoints located behind
+ NAT.
