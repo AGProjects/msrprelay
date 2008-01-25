@@ -4,4 +4,4 @@
 - Review contents of nonce in digest, let peer save nonce state instead of encoding
 - Bandwidth limits/throttling
 - Find better responses for some errors
-- SIPTHor backend
+- SIPThor backend
