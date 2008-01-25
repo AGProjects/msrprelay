@@ -3,7 +3,7 @@ Section: net
 Priority: optional
 Maintainer: Ruud Klaver <ruud@ag-projects.com>
 Build-Depends: cdbs (>= 0.4.49), debhelper (>= 5.0.42), python-all-dev (>= 2.4.4), python-support (>= 0.5.3)
-XS-Python-Version: current, >= 2.4
+XS-Python-Version: all
 Standards-Version: 3.7.3
 
 Package: msrprelay
