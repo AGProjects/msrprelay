@@ -1,0 +1,66 @@
+#!/bin/sh
+#
+# starts and stops the MSRP Relay
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+INSTALL_DIR="/usr/bin"
+RUNTIME_DIR="/var/run"
+
+SERVER="$INSTALL_DIR/msrprelay"
+PID="$RUNTIME_DIR/msrprelay.pid"
+
+# Options for the MSRP Relay. Do not include --pid <pidfile>
+# --pid <pidfile> will be added automatically if needed.
+OPTIONS=""
+
+NAME="msrprelay"
+DESC="MSRP Relay"
+
+test -f $SERVER || exit 0
+
+if [ "$PID" != "/var/run/msrprelay.pid" ]; then
+    OPTIONS="--pid $PID $OPTIONS"
+fi
+
+start() {
+    echo -n "Starting $DESC: $NAME"
+    start-stop-daemon --start --quiet --pidfile $PID --exec $SERVER -- $OPTIONS
+    echo "."
+}
+
+stop () {
+    echo -n "Stopping $DESC: $NAME"
+    start-stop-daemon --stop --quiet --oknodo --signal 15 --pidfile $PID
+    echo "."
+}
+
+reload () {
+    echo -n "Reloading $DESC: $NAME"
+    start-stop-daemon --stop --quiet --oknodo --signal 1 --pidfile $PID
+    echo "."
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    reload)
+        reload
+        ;;
+    restart|force-reload)
+        stop
+        #sleep 1
+        start
+        ;;
+    *)
+        echo "Usage: /etc/init.d/$NAME {start|stop|reload|restart|force-reload}" >&2
+        exit 1
+        ;;
+esac
+
+exit 0
+

@@ -1,0 +1,103 @@
+
+The purpose of the files under the test directory is to provide a working
+proof-of-concept of NAT traversal for SIP/MSRP clients located behind NAT
+routers.
+
+Only msrp_send_file.py and msrp_receive_file.py are discussed here, as the
+other files are for internal testing purposes only.
+
+
+File transfer test client
+-------------------------
+
+msrp_send_file.py and msrp_receive_file.py, are able to respectively send
+and receive a file through the MSRP Relay. Note that these are not full
+implementations of SIP/MSRP clients and are only meant for testing purposes,
+(e.g. SIP signaling and success/failure-reports are not implemented in these
+clients).
+
+To use these clients for performing a file transfer operation, make sure you
+have twisted and python-gnutls >=1.1.5 installed. If you do not have the
+MSRP Relay installed globally on your system, be sure to prepend the
+following commands with "PYTHONPATH=..".
+
+To send a file execute the following on the sending end:
+
+./msrp_send_file.py <path-to-file> <user@domain> [<relay-hostname>] [<relay-port>]
+
+- <path-to-file> is the full path to the file you wish to send to the receiving
+  end.
+
+- <user@domain> indicates the SIP username and domain. You will be prompted for
+  a password for this user/domain combination. Make sure that your relay has
+  a database configured with this account as per installation instructions
+
+- <relay-hostname> can be used to manually specify the hostname of the MSRP
+  Relay you wish to use. If this parameter is not specified, the test client
+  will perform a SRV loopup for _msrps._tcp.domain and try to connect to the
+  resulting hostname and port combination.
+
+- <relay-port> can also be specified manually, if the relay-hostname is
+  specified. If not present, the port when connecting to relay-hostname will
+  be the default MSRP port 2855.
+ 
+The receiving party should execute the following:
+ 
+./msrp_receive_file.py <user@domain> [<relay-hostname>] [<relay-port>]
+ 
+The parameters have the same meaning as for the sender.
+ 
+On a successful MSRP AUTH request, each client will obtain from the msrp
+relay server and display on its console a MSRP path that, in a fully
+implemented SIP/MSRP client, would be used in the SDP negotiation of a SIP
+exchange.
+
+In this test scenario the MSRP paths obtained from the MSRP relay need to be
+exchanged by an out of band mechanism (Jabber client, email client or flying
+pigeons).
+
+First start both clients, then copy the MSRP path provided by the relay from
+the line that appears after "Path to send in SDP:" and paste it when prompted
+by the "Destination path:" in the other client.
+
+After this exchange the sending client will start the file transfer over
+MSRP.
+
+Once the file transfer is completed the receiving client will close the
+connection.
+
+For example, the output of the sender could look like this:
+ 
+# PYTHONPATH=.. python msrp_send_file.py ../TODO alice@example.com
+Password: 
+Connecting to msrprelay.example.com:2855
+Sending initial AUTH
+Got challenge, sending response AUTH
+Path to send in SDP:
+msrps://msrprelay.example.com:2855/FJJ33vYxuOV1U2PVSNjrAzEyMDExODE2NjEuODMyOjgxLjIzLjIyOC4xNDY=;tcp msrps://localhost:12345/QZPX3oAk2jUMA26d;tcp
+Destination path: msrps://msrprelay.example.com:2855/9d7qX3a9rj0tCXatrXd9zDEyMDExODE2NjguOTkyOjgxLjIzLjIyOC4xNDY=;tcp msrps://localhost:12345/0EmYITO0pNSMGpUK;tcp
+Starting transmission of "TODO"
+sent 0 of 396 bytes
+File transfer completed.
+Connection lost!
+Sent 396 bytes in 0 seconds, (2.56 kb/s)
+Connection was closed cleanly.
+
+
+The corresponding output of the receiver would look like this:
+
+# PYTHONPATH=.. python msrp_receive_file.py bob@example.com
+Password: 
+Connecting to msrprelay.example.com:2855
+Sending initial AUTH
+Got challenge, sending response AUTH
+Path to send in SDP:
+msrps://msrprelay.example.com:2855/9d7qX3a9rj0tCXatrXd9zDEyMDExODE2NjguOTkyOjgxLjIzLjIyOC4xNDY=;tcp msrps://localhost:12345/0EmYITO0pNSMGpUK;tcp
+Destination path: msrps://msrprelay.example.com:2855/FJJ33vYxuOV1U2PVSNjrAzEyMDExODE2NjEuODMyOjgxLjIzLjIyOC4xNDY=;tcp msrps://localhost:12345/QZPX3oAk2jUMA26d;tcp
+Receiving file "TODO"
+received 396 of 396 bytes
+File transfer completed successfully.
+Received 396 bytes in 0 seconds, (11.36 kb/s)
+Connection lost!
+Connection was closed cleanly.
+

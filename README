@@ -1,0 +1,174 @@
+
+MSRP Relay
+----------
+
+Copyright (c) 2007-2008 AG Projects
+http://ag-projects.com
+
+Author: Ruud Klaver
+
+
+License
+-------
+
+This software is licensed according to the GNU General Public License version 2.
+See LICENSE file for more details.
+
+
+Purpose
+-------
+
+This software implements an MSRP relay, which is an extension to the MSRP
+protocol. Its main role is to help NAT traversal of Interactive Messaging and
+file transfer sessions for SIP/MSRP endpoints located behind NAT.
+
+
+Background
+-----------
+
+A series of related instant messages between two or more parties can be viewed
+as part of a "message session", that is, a conversational exchange of messages
+with a definite beginning and end. This is in contrast to individual messages
+each sent independently. Messaging schemes that track only individual messages
+can be described as "page-mode" messaging, whereas messaging that is part of a
+"session" with a definite start and end is called "session-mode" messaging.
+
+Page-mode messaging is enabled in SIP via the SIP MESSAGE method, as defined in
+RFC 3428. Session-mode messaging has a number of benefits over page-mode
+messaging, however, such as explicit rendezvous, tighter integration with other
+media-types, direct client-to-client operation, and brokered privacy and security.
+
+Message Session Relay Protocol (MSRP) is a protocol for transmitting a series
+of related instant messages in the context of a session. Message sessions are
+treated like any other media stream when set up via a rendezvous or session
+creation protocol such as the Session Initiation Protocol (SIP). MSRP Sessions
+are defined in RFC 4975.
+
+
+Dependencies
+------------
+
+This software was designed to run on Linux systems, it has been developed and
+tested on Linux Debian unstable distribution.
+
+The software has the following dependencies:
+
+- Python >=2.4
+  http://python.org
+- Twisted >=2.5.0
+  http://twistedmatrix.com
+- GnuTLS >=1.4.4, <=2.1
+  http://www.gnu.org/software/gnutls/
+- python-gnutls >=1.1.5
+  http://pypi.python.org/pypi/python-gnutls/
+- python-application >=1.0.9
+  http://pypi.python.org/pypi/python-application
+- SQLObject (only if the database backend is used)
+  http://sqlobject.org
+
+
+Backends
+--------
+
+The software supports different backend modules for SIP account credentials
+storage. At the moment, two backends are supported.
+
+The database backend allows the MSRP Relay to consult a database through
+SQLObject. SQLObject supports several database types, including MySQL and
+SQlite. For a complete listing, see the SQLObject documentation.
+
+Out of the box, the software is designed to work in combinations with the
+subscriber database used by OpenSER (see http://openser.org).
+
+The second backend is an in-memory backend, which can be used for testing
+purposes. Username and password combinations can be specified in the
+configuration file.
+
+
+TLS server_name extension
+--------------------------
+
+This MSRP Relay is designed to operate in a multi-domain setup. The domains
+relate to the SIP domains served by a SIP Proxy/Registrar (e.g. example.com).
+
+For each SIP domain it serves, the relay has different TLS credentials that
+will present to the client. To make sure the correct credentials are presented,
+during the initial TLS "HELLO" the connecting client must set the TLS extension
+"server_name" field to match the domain name of the SIP domain it is currently
+configured for (N.B.: not the hostname of the MSRP relay). 
+
+The SIP domain, negotiated during the TLS handshake, is then used for
+authenticating the session reservation requests made by the client under the
+right domain.
+
+If the server_name extension field is not present during the TLS handshake, the
+authentication will be performed under the same default domain specified in the
+server configuration.
+
+
+Session management
+------------------
+
+The MSRP Relay was specifically designed to support end-to-end congestion
+control for MSRP sessions, in order to support high volume data transfers, such
+as file transfers. For this reason, session sharing between connections cannot
+be used and each TCP/TLS connection supports only one session. 
+
+This means that the client will need to open a new connection for each session
+before doing an AUTH. Also the MSRP will initiate every time a new connection
+to other endpoints so that congestion control can be performed on a session
+basis.
+
+
+Getting started
+---------------
+
+* Make sure you have all the dependencies listed above installed.
+
+* Generate a CA certificate/key pair and use that to generate certificate/key
+  pairs for each domain you want the MSRP Relay to be active in. Each
+  certificate should refer to the domain served by the relay and not its
+  hostname. Sample scripts for this are provided in the certs/ directory.
+
+* Configure the MSRP Relay by copying config.ini.sample to config.ini and
+  editing it. The domain section(s) should include the key/certificate pair(s)
+  generated at the previous step.
+
+* If you don't have a running user database to connect to you can test using
+  the in-memory backend as described.
+
+* Start the MSRP Relay, either in the console by executing ./msrprelay --no-fork
+  or as a deamon, which is the default behaviour. This can also be done using
+  the init.d script provided. If the MSRP Relay runs as a deamon it will log to
+  syslog.
+
+* The test/ directory contains a number of test scripts and a simple file
+  file transfer sender and receiver. See the README in the test/ directory for
+  documentation on the latter.
+
+
+DNS setup
+---------
+
+For each domain served by the relay the following DNS record must be added to
+the name server authoritative for the domain:
+
+_msrps._tcp.example.com. IN SRV	0 0 2855 msrprelay.example.com.
+msrprelay.example.com. IN A 10.0.0.1
+
+Replace the domain name, hostname and IP address with the real ones.
+
+
+Configuration
+-------------
+
+A sample configuration file is provided as config.ini.sample. All configuration
+options are documented in this file.
+
+The software will reload its configuration file when it receives the HUP
+signal. All of the already established sessions will continue to operate using
+the old settings until a disconnection occurs within this session. This allows
+for changes in the configuration without disruption of service.
+
+Note: at this moment the backend configurations are not re-read.
+

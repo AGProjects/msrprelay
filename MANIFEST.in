@@ -1,0 +1,3 @@
+recursive-include debian changelog compat control copyright dirs msrprelay.init msrprelay.postrm rules
+recursive-include certs gen_ca_creds.sh gen_relay_creds.sh
+include config.ini.sample LICENSE

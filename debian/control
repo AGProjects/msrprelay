@@ -1,0 +1,14 @@
+Source: msrprelay
+Section: net
+Priority: optional
+Maintainer: Ruud Klaver <ruud@ag-projects.com>
+Build-Depends: cdbs (>= 0.4.49), debhelper (>= 5.0.42), python-all-dev (>= 2.4.4), python-support (>= 0.5.3)
+XS-Python-Version: current, >= 2.4
+Standards-Version: 3.7.3
+
+Package: msrprelay
+Architecture: all
+Depends: ${python:Depends}, python-twisted (>= 2.5.0), python-application (>= 1.0.9), python-gnutls (>= 1.1.5), python-sqlobject (>= 0.9.3)
+XB-Python-Version: ${python:Versions}
+Description: MSRP Relay, a RFC 4976 compatible IM relay
+ A MSRP Relay daemon that helps in performing MSRP sessions through NAT.
