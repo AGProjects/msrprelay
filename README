@@ -138,7 +138,7 @@ Getting started
   the in-memory backend as described.
 
 * Start the MSRP Relay, either in the console by executing ./msrprelay --no-fork
-  or as a deamon, which is the default behaviour. This can also be done using
+  or as a daemon, which is the default behaviour. This can also be done using
   the init.d script provided. If the MSRP Relay runs as a deamon it will log to
   syslog.
 
