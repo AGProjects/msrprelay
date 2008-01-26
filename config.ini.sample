@@ -56,7 +56,7 @@ default_domain = example.com
 ; The hostname of this MSRP relay. This is used for MSRP URI generation, if
 ; missing the IP address where the relay has been contacted for session
 ; reservation will be used
-; hostname = relay.example.com
+; default_hostname = relay.example.com
 
 ; Backend configuration
 ;
