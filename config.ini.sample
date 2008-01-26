@@ -50,7 +50,8 @@ default_ca_list = ca_list.pem
 default_crl_list = crl_list.pem
 
 ; The default of the domains to be used when a client connects without
-; specifying a server_name
+; specifying a server_name.
+; Note that this should reference one of the Domain config sections.
 default_domain = example.com
 
 ; The hostname of this MSRP relay. This is used for MSRP URI generation, if
@@ -99,6 +100,33 @@ bob@example.com = 1234
 
 ; Per domain configuration
 ; Requires the use of server_name extension in the TLS clients
+
+[Domain:example.com]
+; The hostname of this MSRP relay. This is used for MSRP URI generation, if
+; missing the default_hostname will be used if defined, otherwise the IP
+; address where the relay has been contacted for session reservation will be
+; used
+; hostname = relay.example.com
+
+; The password/username backend to use, if the default one is not to be used.
+; backend = database
+
+; The domain value used in the digest authentication of the AUTH exchange. By
+; default this is the same as the current domain name, use this value if it
+; needs to be overriden only.
+; digest_domain = example.com
+
+; The X509 certificate file to use during the TLS handshake
+; certificate = server.crt
+
+; The X509 private key file to use during the TLS handshake
+; key = server.key
+
+; The CA list to use if the default is not to be used.
+; ca_list = ca_list.pem
+
+; The CRL list to use if the default is not to be used.
+; clr_list = crl_list.pem
 
 [Domain:example2.com]
 ; The hostname of this MSRP relay. This is used for MSRP URI generation, if
