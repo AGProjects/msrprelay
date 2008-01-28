@@ -11,53 +11,41 @@
 ; Global configuration
 [Relay]
 
-; Local IP address to listen on. Default is all addresses for this host.
-address = 0.0.0.0
-
-; Port to listen on for incoming TCP connections. The default value is the
-; default IANA MSRP port.
-port = 2855
+; Local IP address and port to listen on. Default is to listen on all addresses
+; for this host on port 2855, the default IANA MSRP port.
+; address = 0.0.0.0:2855
 
 ; Allow other methods besides SEND to be forwarded through the relay
-allow_other_methods = No
+; allow_other_methods = No
 
 ; Disable TLS and use TCP only for this MSRP Relay. As this limits functionality
 ; and breaks with specifications, only use this for debugging purposes.
-debug_notls = No
+; debug_notls = No
 
 ; Log failed AUTH attempts to the syslog or console.
-log_failed_auth = No
+; log_failed_auth = No
 
 ; Maximum ammount of times a newly connected client can re-try an AUTH before it
 ; gets disconnected.
-max_auth_attempts = 3
+; max_auth_attempts = 3
 
 ; The number of seconds a AUTH challenge, once issued, remains valid
-auth_challenge_expiration_time = 15
+; auth_challenge_expiration_time = 15
 
 ; The default backend to use for username/password retrieval. Backend names
 ; refer to modules in the backend package. This value can be overridden per
 ; domain.
-default_backend = database
+backend = database
 
-; A comma separated list of X.509 certificate files which will be the default
-; list of CAs to be checked against. This value can be overridden per domain.
-default_ca_list = ca_list.pem
+; The default hostname to present in Use-Path MSRP URIs. If this is not present
+; the IP address of the relay to which the client connected will be used. This
+; value can be overridden per domain.
+; hostname = relay.example.com
 
-; A comma separated list of X.509 certificate revocation files which will be the
-; default list of certificate revocations. This value can be overridden per
-; domain.
-default_crl_list = crl_list.pem
-
-; The default of the domains to be used when a client connects without
-; specifying a server_name.
-; Note that this should reference one of the Domain config sections.
+; The default domain to be used when a client connects without specifying the
+; server_name TLS extension. Note that this should reference one of the Domain
+; sections.
 default_domain = example.com
-
-; The hostname of this MSRP relay. This is used for MSRP URI generation, if
-; missing the IP address where the relay has been contacted for session
-; reservation will be used
-; default_hostname = relay.example.com
 
 ; Backend configuration
 ;
@@ -93,64 +81,21 @@ uri = mysql://user:pass@db/openser
 ; In-memory backend. Each entry is a username/password pair. Only use for
 ; testing purposes.
 [Memory]
-;user1 = pass1
-;user2 = pass2
-alice@example.com = 1234
-bob@example.com = 1234
+; alice@example.com = 1234
+; bob@example.com = 1234
 
 ; Per domain configuration
-; Requires the use of server_name extension in the TLS clients
 
 [Domain:example.com]
-; The hostname of this MSRP relay. This is used for MSRP URI generation, if
-; missing the default_hostname will be used if defined, otherwise the IP
-; address where the relay has been contacted for session reservation will be
-; used
+; The hostname of this MSRP relay, within the current domain. This is used for
+; MSRP URI generation and checking.
 ; hostname = relay.example.com
 
 ; The password/username backend to use, if the default one is not to be used.
 ; backend = database
 
-; The domain value used in the digest authentication of the AUTH exchange. By
-; default this is the same as the current domain name, use this value if it
-; needs to be overriden only.
-; digest_domain = example.com
-
 ; The X509 certificate file to use during the TLS handshake
-; certificate = server.crt
+certificate = /etc/msrprelay/server.crt
 
 ; The X509 private key file to use during the TLS handshake
-; key = server.key
-
-; The CA list to use if the default is not to be used.
-; ca_list = ca_list.pem
-
-; The CRL list to use if the default is not to be used.
-; clr_list = crl_list.pem
-
-[Domain:example2.com]
-; The hostname of this MSRP relay. This is used for MSRP URI generation, if
-; missing the default_hostname will be used if defined, otherwise the IP
-; address where the relay has been contacted for session reservation will be
-; used
-; hostname = relay.example2.com
-
-; The password/username backend to use, if the default one is not to be used.
-; backend = database
-
-; The domain value used in the digest authentication of the AUTH exchange. By
-; default this is the same as the current domain name, use this value if it
-; needs to be overriden only.
-; digest_domain = example2.com
-
-; The X509 certificate file to use during the TLS handshake
-; certificate = server2.crt
-
-; The X509 private key file to use during the TLS handshake
-; key = server2.key
-
-; The CA list to use if the default is not to be used.
-; ca_list = ca_list2.pem
-
-; The CRL list to use if the default is not to be used.
-; clr_list = crl_list2.pem
+key = /etc/msrprelay/server.key

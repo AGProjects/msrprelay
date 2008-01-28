@@ -34,7 +34,7 @@ from gnutls.constants import *
 from gnutls.interfaces.twisted import X509Credentials
 from gnutls.errors import GNUTLSError
 
-from msrp.tls import Certificate, CertificateList, PrivateKey
+from msrp.tls import Certificate, PrivateKey
 from msrp.protocol import *
 from msrp.digest import AuthChallenger, LoginFailed
 from msrp.responses import *
@@ -44,20 +44,16 @@ rand_source = open("/dev/urandom")
 def load_default_config():
     global RelayConfig
     class RelayConfig(ConfigSection):
-        _datatypes = {"address": NetworkAddress, "allow_other_methods": Boolean, 
-                      "default_ca_list": CertificateList, "default_crl_list": CertificateList}
-        address = "0.0.0.0"
-        default_hostname = ""
-        port = 2855
+        _datatypes = {"address": NetworkAddress, "allow_other_methods": Boolean}
+        address = NetworkAddress("0.0.0.0:2855")
+        hostname = ""
         default_domain = "msrprelay.org"
         allow_other_methods = False
         session_expiration_time_minimum = 60
         session_expiration_time_default = 600
         session_expiration_time_maximum = 3600
         auth_challenge_expiration_time = 15
-        default_ca_list = []
-        default_crl_list = []
-        default_backend = "database"
+        backend = "database"
         max_auth_attempts = 3
         debug_notls = False
         log_failed_auth = False
@@ -68,12 +64,10 @@ config.read_settings("Relay", RelayConfig)
 
 class DomainConfigBase(ConfigSection):
     _datatypes = {"certificate": Certificate, "key": PrivateKey}
-    backend = RelayConfig.default_backend
+    backend = RelayConfig.backend
     hostname = ""
     certificate = None
     key = None
-    ca_list = RelayConfig.default_ca_list
-    crl_list = RelayConfig.default_crl_list
 
 class Relay(object):
     global config
@@ -104,9 +98,9 @@ class Relay(object):
     def _do_run(self):
         credentials = dict((id.name, id.credentials) for id in self.domains.itervalues())
         if RelayConfig.debug_notls:
-            self.listener = reactor.listenTCP(RelayConfig.port, self.factory, interface=RelayConfig.address[0])
+            self.listener = reactor.listenTCP(RelayConfig.address[1], self.factory, interface=RelayConfig.address[0])
         else:
-            self.listener = reactor.listenTLS(RelayConfig.port, self.factory, credentials[RelayConfig.default_domain], interface=RelayConfig.address[0], server_name_credentials=credentials)
+            self.listener = reactor.listenTLS(RelayConfig.address[1], self.factory, credentials[RelayConfig.default_domain], interface=RelayConfig.address[0], server_name_credentials=credentials)
 
     def run(self):
         self._do_run()
@@ -132,11 +126,11 @@ class Domain(object):
         self.name = name
         if config.hostname:
             self.hostname = config.hostname
-        elif RelayConfig.default_hostname:
-            self.hostname = RelayConfig.default_hostname
+        elif RelayConfig.hostname:
+            self.hostname = RelayConfig.hostname
         else:
             self.hostname = None
-        self.credentials = X509Credentials(config.certificate, config.key, config.ca_list, config.crl_list)
+        self.credentials = X509Credentials(config.certificate, config.key)
         self.credentials.session_params.protocols = (PROTO_TLS1_1,)
         self.credentials.session_params.kx_algorithms = (KX_RSA,)
         self.credentials.session_params.ciphers = (CIPHER_AES_128_CBC,)
@@ -146,9 +140,9 @@ class Domain(object):
 
     def generate_uri(self, addr):
         if self.hostname:
-            return URI("%s" % self.hostname, port = RelayConfig.port, use_tls = not RelayConfig.debug_notls)
+            return URI("%s" % self.hostname, port = RelayConfig.address[1], use_tls = not RelayConfig.debug_notls)
         else:
-            return URI("%s" % addr.host, port = RelayConfig.port, use_tls = not RelayConfig.debug_notls)
+            return URI("%s" % addr.host, port = RelayConfig.address[1], use_tls = not RelayConfig.debug_notls)
 
     def log(self, log_func, msg):
         log_func("%s: %s" % (self.name, msg))
@@ -170,17 +164,7 @@ class RelayFactory(Factory):
                 protocol.transport.loseConnection()
                 return
         domain = relay.domains[server_name]
-        # Verify the peer certificate. If not present we are dealing with a client, not a relay.
-        if tls_session.peer_certificate is None:
-            is_relay = False
-        else:
-            try:
-                tls_session.verify_peer()
-            except GNUTLSError, e:
-                protocol.transport.loseConnection()
-                self.domain.log(log.error, "Error verifying certificate: %s" % str(e))
-            is_relay = True
-        peer = Peer(domain, is_relay, protocol = protocol)
+        peer = Peer(domain, protocol = protocol)
         #peer.log(log.debug, "Received new connection")
         return peer
 
@@ -192,7 +176,7 @@ class RelayFactoryNoTLS(Factory):
         relay = Relay()
         server_name = RelayConfig.default_domain
         domain = relay.domains[server_name]
-        peer = Peer(domain, True, protocol = protocol)
+        peer = Peer(domain, protocol = protocol)
         #peer.log(log.debug, "Received new connection")
         return peer
 
@@ -205,21 +189,6 @@ class ConnectingFactory(ClientFactory):
         self.uri = uri
 
     def get_peer(self, protocol):
-        if self.uri.use_tls:
-            tls_session = protocol.transport.socket
-            try:
-                tls_session.verify_peer()
-            except GNUTLSError, e:
-                self.peer.log(log.error, "Error verifying certificate: %s" % str(e))
-                protocol.transport.loseConnection()
-                self.peer.connection_failed(e)
-                return
-            # Relax this requirement
-            #if not tls_session.peer_certificate.has_hostname(self.uri.host):
-            #    self.peer.log(log.error, "TLS certificate hostname (%s) does not match" % self.uri.host)
-            #    protocol.transport.loseConnection()
-            #    self.peer.connection_failed(GNUTLSError("TLS certificate hostname does not match"))
-            #    return
         self.peer.got_protocol(protocol)
         return self.peer
 
@@ -307,9 +276,8 @@ class ForwardingData(object):
 class Peer(object):
     implements(IPullProducer)
 
-    def __init__(self, domain, is_relay, session = None, protocol = None, path = None, other_peer = None):
+    def __init__(self, domain, session = None, protocol = None, path = None, other_peer = None):
         self.domain = domain
-        self.is_relay = is_relay
         self.session = session
         self.protocol = protocol
         self.other_peer = other_peer
@@ -332,15 +300,11 @@ class Peer(object):
         self.relay = Relay()
 
     def __str__(self):
-        if self.is_relay:
-            name = "Relay"
-        else:
-            name = "Client"
         if self.session is None:
             address = self.protocol.transport.getPeer()
-            return "%s %s:%d (%s)" % (name, address.host, address.port, self.state)
+            return "%s:%d (%s)" % (address.host, address.port, self.state)
         else:
-            return "%s session %s (%s)" % (name, self.session.session_id, self.state)
+            return "session %s (%s)" % (self.session.session_id, self.state)
 
     def log(self, log_func, msg):
         self.domain.log(log_func, "%s: %s" % (str(self), msg))
@@ -427,15 +391,6 @@ class Peer(object):
         # Check if To-Path is really directed to us.
         to_path = msrpdata.headers["To-Path"].decoded
         from_path = msrpdata.headers["From-Path"].decoded
-        #to_uri = URI(to_path[0].host, use_tls = to_path[0].use_tls, port = to_path[0].port)
-        #if to_uri != self.domain.generate_uri(self.protocol.transport.getHost()):
-        #    self.log(log.warn, "Received a wrong to_path entry for me: %s" % to_path[0])
-        #    self.disconnect()
-        #    return
-        if len(from_path) > 1 and not self.is_relay:
-            self.log(log.warn, "Client acting as a relay")
-            self.disconnect()
-            return
         if msrpdata.method == "AUTH" and len(to_path) == 1:
             return self._handle_auth(msrpdata)
         elif (msrpdata.method == "SEND" or (msrpdata.method is not None and msrpdata.method != "REPORT" and RelayConfig.allow_other_methods)) and len(to_path) > 1:
@@ -569,7 +524,7 @@ class Peer(object):
             if self.state == "UNBOUND":
                 if msrpdata.method != "SEND" and (msrpdata.method is None or msrpdata.method == "REPORT" or not RelayConfig.allow_other_methods):
                     raise ResponseNoSession(msrpdata, "Non-forwarding method received on unbound session")
-                self.got_destination(Peer(self.domain, len(to_path) > 1, path = to_path, session = self.session, other_peer = self))
+                self.got_destination(Peer(self.domain, path = to_path, session = self.session, other_peer = self))
                 uri = to_path[0]
                 #self.log(log.debug, "Attempting to connect to %s" % str(uri))
                 factory = ConnectingFactory(self.other_peer, uri)

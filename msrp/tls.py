@@ -50,17 +50,6 @@ class Certificate(object):
         else:
             raise TypeError, 'value should be a string'
 
-class CertificateList(StringList):
-
-    def __new__(cls, value):
-        string_list = StringList.__new__(cls, value)
-        certs = []
-        for cert_file in string_list:
-            cert = Certificate(cert_file)
-            if cert is not None:
-                certs.append(cert)
-        return certs
-
 class PrivateKey(object):
     """Configuration data type. Used to create a gnutls.crypto.X509PrivateKey object
        from a file given in the configuration file."""
