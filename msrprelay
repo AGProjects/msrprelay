@@ -15,7 +15,7 @@ if __name__ == '__main__':
     description = 'An open source MSRP Relay'
 
     config_directory = '/etc/msrprelay'
-    runtime_directory = '/var/run/msrprelay'
+    runtime_directory = '/var/run'
     default_pid = "%s/%s.pid" % (runtime_directory, name)
 
     parser = OptionParser(version="%%prog %s" % msrp.__version__)
