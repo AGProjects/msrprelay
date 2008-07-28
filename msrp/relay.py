@@ -32,6 +32,7 @@ from twisted.internet.interfaces import IPullProducer
 
 from gnutls.constants import *
 from gnutls.interfaces.twisted import X509Credentials
+from gnutls.crypto import X509Identity
 from gnutls.errors import GNUTLSError
 
 from msrp.tls import Certificate, PrivateKey
@@ -96,11 +97,13 @@ class Relay(object):
         self.auth_challenger = AuthChallenger(RelayConfig.auth_challenge_expiration_time)
 
     def _do_run(self):
-        credentials = dict((id.name, id.credentials) for id in self.domains.itervalues())
+        default_identity = self.domains[RelayConfig.default_domain].identity
+        credentials = X509Credentials(default_identity.cert, default_identity.key, identities=[domain.identity for domain in self.domains.itervalues()])
+        credentials.server_name_identities.update(dict((domain_name, domain.identity) for domain_name, domain in self.domains.iteritems()))
         if RelayConfig.debug_notls:
             self.listener = reactor.listenTCP(RelayConfig.address[1], self.factory, interface=RelayConfig.address[0])
         else:
-            self.listener = reactor.listenTLS(RelayConfig.address[1], self.factory, credentials[RelayConfig.default_domain], interface=RelayConfig.address[0], server_name_credentials=credentials)
+            self.listener = reactor.listenTLS(RelayConfig.address[1], self.factory, credentials, interface=RelayConfig.address[0])
 
     def run(self):
         self._do_run()
@@ -130,6 +133,7 @@ class Domain(object):
             self.hostname = RelayConfig.hostname
         else:
             self.hostname = None
+        self.identity = X509Identity(config.certificate, config.key)
         self.credentials = X509Credentials(config.certificate, config.key)
         self.credentials.session_params.protocols = (PROTO_TLS1_1,)
         self.credentials.session_params.kx_algorithms = (KX_RSA,)
