@@ -85,25 +85,35 @@ purposes. Username and password combinations can be specified in the
 configuration file.
 
 
-TLS server_name extension
---------------------------
+Multi-domain operation
+----------------------
 
 This MSRP Relay is designed to operate in a multi-domain setup. The domains
 relate to the SIP domains served by a SIP Proxy/Registrar (e.g. example.com).
 
-For each SIP domain it serves, the relay has different TLS credentials that
-will present to the client. To make sure the correct credentials are presented,
-during the initial TLS "HELLO" the connecting client must set the TLS extension
-"server_name" field to match the domain name of the SIP domain it is currently
-configured for (N.B.: not the hostname of the MSRP relay). 
+In this setup the MSRP Relay runs on a host that is referenced by a DNS A
+record (load balancing between several MSRP relays can be achieved by having
+this A record refer to more than one IP address). As an example this would be
+"msrprelay.example.com". The MSRP Relay has one TLS certificate/key pair
+containing this hostname in the subject alternative name.
 
-The SIP domain, negotiated during the TLS handshake, is then used for
-authenticating the session reservation requests made by the client under the
-right domain.
+For each SIP domain it serves, a DNS SRV record is provisioned. This could be
+for example: "_msrps._tcp.msrprelay.org -> msrprelay.example.com:2855".
 
-If the server_name extension field is not present during the TLS handshake, the
-authentication will be performed under the same default domain specified in the
-server configuration.
+The client that wishes to reserve a session at the MSRP Relay active within
+its SIP domain then resolves the SRV record for its domain, connects to the
+relay using TLS and sends an AUTH request with its SIP domain as MSRP URI
+in the To-Path header, like such:" msrps://msrprelay.org;tcp".
+
+The MSRP relay then uses the host part of this MSRP URI as domain to
+authenticate the user in.
+
+To facilitate testing and remove the need to provision SRV records, taking the
+authentication domain from the To-Path MSRP URI can be disabled by manually
+specifying the domain in the configuration file. In this case the
+authenticating client should put the actual hostname of the MSRP Relay into
+the To-Path MSRP URI of an AUTH request. Note that this implies single domain
+operation.
 
 
 Session management
@@ -125,26 +135,29 @@ Getting started
 
 * Make sure you have all the dependencies listed above installed.
 
-* Generate a CA certificate/key pair and use that to generate certificate/key
-  pairs for each domain you want the MSRP Relay to be active in. Each
-  certificate should refer to the domain served by the relay and not its
-  hostname. Sample scripts for this are provided in the certs/ directory.
+* Generate a CA certificate/key pair and use that to a generate certificate/key
+  pair for the host on which the MSRP relay is running. Sample scripts for this
+  are provided in the "certs/" directory.
 
 * Configure the MSRP Relay by copying config.ini.sample to config.ini and
-  editing it. The domain section(s) should include the key/certificate pair(s)
-  generated at the previous step.
+  editing it. At the very least the certificates need to be provided and the
+  authentication backend needs to be configured.
 
 * If you don't have a running user database to connect to you can test using
   the in-memory backend as described.
+
+* Provision the appropriate A and SRV records in your DNS server, as described
+  below. If you want to avoid doing this, the relay can operate in
+  single-domain mode as described above.
 
 * Start the MSRP Relay, either in the console by executing ./msrprelay --no-fork
   or as a daemon, which is the default behaviour. This can also be done using
   the init.d script provided. If the MSRP Relay runs as a deamon it will log to
   syslog.
 
-* The test/ directory contains a number of test scripts and a simple file
-  file transfer sender and receiver. See the README in the test/ directory for
-  documentation on the latter.
+* The "test/" directory contains a number of test scripts and a simple file
+  file transfer sender and receiver. See the README in the "test/" directory
+  for documentation on the latter.
 
 
 DNS setup

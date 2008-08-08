@@ -1,15 +1,19 @@
 ;
 ; MSRP Relay example configuration file
 ;
-; This configuration file consists of three subsections:
+; This configuration file consists of two subsections:
 ;
 ; - a global configuration section under the "Relay" heading
 ; - a configuration section per username/password retrieval backend
-; - a configuration section per domain in which the MSRP relay is active,
-;   starting with a "Domain:" heading
 
 ; Global configuration
 [Relay]
+
+; The X509 certificate file to use during the TLS handshake.
+certificate = /etc/msrprelay/server.crt
+
+; The X509 private key file to use during the TLS handshake.
+key = /etc/msrprelay/server.key
 
 ; Local IP address and port to listen on. Default is to listen on all addresses
 ; for this host on port 2855, the default IANA MSRP port.
@@ -18,34 +22,36 @@
 ; Allow other methods besides SEND to be forwarded through the relay
 ; allow_other_methods = No
 
-; Disable TLS and use TCP only for this MSRP Relay. As this limits functionality
-; and breaks with specifications, only use this for debugging purposes.
+; Disable TLS and use TCP only for this MSRP Relay. As this breaks with
+; specifications, only use it for debugging purposes.
 ; debug_notls = No
 
 ; Log failed AUTH attempts to the syslog or console.
 ; log_failed_auth = No
 
-; Maximum ammount of times a newly connected client can re-try an AUTH before it
-; gets disconnected.
+; Maximum ammount of times a newly connected client can re-try an AUTH before
+; it gets disconnected.
 ; max_auth_attempts = 3
 
 ; The number of seconds a AUTH challenge, once issued, remains valid
 ; auth_challenge_expiration_time = 15
 
 ; The default backend to use for username/password retrieval. Backend names
-; refer to modules in the backend package. This value can be overridden per
-; domain.
+; refer to modules in the backend package.
 backend = database
 
-; The default hostname to present in Use-Path MSRP URIs. If this is not present
-; the IP address of the relay to which the client connected will be used. This
-; value can be overridden per domain.
+; The hostname to present in Use-Path MSRP URIs. Normally this need not be
+; specified, as it is fetched automatically from the subject alternative name
+; of the TLS certificate. If TLS is disabled and the hostname value is not
+; specified, the IP address on which the relay is listening will be used.
 ; hostname = relay.example.com
 
-; The default domain to be used when a client connects without specifying the
-; server_name TLS extension. Note that this should reference one of the Domain
-; sections.
-default_domain = example.com
+; If this value is not specified, the domain part of the authentication is
+; taken to be the host part of the URI in the To-Path of the AUTH request. As
+; this requires provisioning of SRV records, the value can be manually
+; overridden here. Note that this implies that all users are authenticated in
+; this, and only this, domain.
+; default_domain = example.com
 
 ; Backend configuration
 ;
