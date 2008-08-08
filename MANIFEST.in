@@ -1,4 +1,4 @@
-recursive-include debian changelog compat control copyright dirs msrprelay.init msrprelay.postrm rules
+recursive-include debian changelog compat control copyright dirs msrprelay.init rules
 recursive-include certs gen_ca_creds.sh gen_relay_creds.sh
 recursive-include test msrp_send_file.py msrp_receive_file.py
 include config.ini.sample LICENSE
