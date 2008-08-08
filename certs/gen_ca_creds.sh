@@ -1,7 +1,13 @@
 #!/bin/bash
 
-echo Generating TLS credentials for CA \(${1}\)
-echo Please make sure you generate enough entropy!
+if [ $# -ne 1 ]
+then
+  echo "Usage: `basename $0` <ca-common-name>"
+  exit
+fi
+
+echo "Generating TLS credentials for CA \(${1}\)"
+echo "Please make sure you generate enough entropy!"
 certtool --generate-privkey >ca-key.pem
 echo "cn = ${1}" > ca.tmpl
 echo "ca" >> ca.tmpl
