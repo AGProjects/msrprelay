@@ -31,7 +31,8 @@ class Checker(object):
        self.cleartext_passwords = config.cleartext_passwords
 
     def retrieve_password(self, username, domain):
-        if username in config.user_db:
-            return succeed(config.user_db[username])
+        key = "%s@%s" % (username, domain)
+        if key in config.user_db:
+            return succeed(config.user_db[key])
         else:
             return fail(LoginFailed("Username not found"))
