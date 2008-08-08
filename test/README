@@ -3,9 +3,6 @@ The purpose of the files under the test directory is to provide a working
 proof-of-concept of NAT traversal for SIP/MSRP clients located behind NAT
 routers.
 
-Only msrp_send_file.py and msrp_receive_file.py are discussed here, as the
-other files are for internal testing purposes only.
-
 
 File transfer test client
 -------------------------
