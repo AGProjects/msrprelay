@@ -23,26 +23,17 @@ from msrp.responses import *
 rand_source = open("/dev/urandom")
 BLOCK_SIZE = 64 * 1024
 
-class SRVConnectorInterceptor(SRVConnector):
-
-    def set_hostport_func(self, func):
-        self.hostport_func = func
-
-    def pickServer(self):
-        host, port = SRVConnector.pickServer(self)
-        self.hostport_func(host, port)
-        return host, port
-
 def generate_transaction_id():
     return b64encode(rand_source.read(12), "+-")
 
 class MSRPFileSenderFactory(ClientFactory):
     protocol = MSRPProtocol
 
-    def __init__(self, username, password, infile, filename):
+    def __init__(self, username, password, relay_uri, infile, filename):
         self.uri = URI("localhost", use_tls = True, port = 12345, session_id = b64encode(rand_source.read(12)))
         self.username = username
         self.password = password
+        self.relay_uri = relay_uri
         self.infile = infile
         self.filename = filename
         self.byte_count = 0
@@ -51,14 +42,6 @@ class MSRPFileSenderFactory(ClientFactory):
         self.do_on_end = None
         self.start_time = None
         self.complete = False
-
-    def set_relay_hostport(self, host, port):
-        if port == "msrps":
-            print "SRV lookup failed!"
-            reactor.callLater(0, reactor.stop)
-        else:
-            print "Connecting to %s:%d" % (host, port)
-            self.relay_uri = URI(host, use_tls = True, port = port)
 
     def get_peer(self, protocol):
         self.protocol = protocol
@@ -142,16 +125,18 @@ class MSRPFileSenderFactory(ClientFactory):
         self.protocol.transport.write(msrpdata.encode_end("$"))
 
     def clientConnectionFailed(self, connector, err):
+        print "Connection failed"
         print err.value
         reactor.callLater(0, reactor.stop)
 
     def clientConnectionLost(self, connector, err):
+        print "Connection lost"
         print err.value
         reactor.callLater(0, reactor.stop)
 
 if __name__ == "__main__":
     if len(sys.argv) < 3 or len(sys.argv) > 5:
-        print "Usage: %s infile user@domain [relay-hostname] [relay-port]" % sys.argv[0]
+        print "Usage: %s infile user@domain [relay-hostname [relay-port]]" % sys.argv[0]
         print "If the hostname and port are not specified, the MSRP relay will be discovered"
         print "through the the _msrps._tcp.domain SRV record. If a hostname is specified but"
         print "no port, the default port of 2855 will be used."
@@ -162,10 +147,9 @@ if __name__ == "__main__":
         cred = X509Credentials(None, None)
         cred.verify_peer = False
         password = getpass()
-        factory = MSRPFileSenderFactory(username, password, infile, filename.split(os.path.sep)[-1])
         if len(sys.argv) == 3:
-            connector = SRVConnectorInterceptor(reactor, "msrps", domain, factory, connectFuncName = "connectTLS", connectFuncArgs = [cred], connectFuncKwArgs = {"server_name": domain})
-            connector.set_hostport_func(factory.set_relay_hostport)
+            factory = MSRPFileSenderFactory(username, password, URI(domain, use_tls = True), infile, filename.split(os.path.sep)[-1])
+            connector = SRVConnector(reactor, "msrps", domain, factory, connectFuncName = "connectTLS", connectFuncArgs = [cred])
             connector.connect()
         else:
             relay_host = sys.argv[3]
@@ -173,6 +157,6 @@ if __name__ == "__main__":
                 relay_port = int(sys.argv[4])
             else:
                 relay_port = 2855
-            factory.set_relay_hostport(relay_host, relay_port)
-            reactor.connectTLS(relay_host, relay_port, factory, cred, server_name = domain)
+            factory = MSRPFileSenderFactory(username, password, URI(relay_host, port = relay_port, use_tls = True), infile, filename.split(os.path.sep)[-1])
+            reactor.connectTLS(relay_host, relay_port, factory, cred)
         reactor.run()
