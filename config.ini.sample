@@ -9,10 +9,10 @@
 ; Global configuration
 [Relay]
 ; The X509 certificate file to use during the TLS handshake.
-certificate = msrprelay.crt
+certificate = tls/msrprelay.crt
 
 ; The X509 private key file to use during the TLS handshake.
-key = msrprelay.key
+key = tls/msrprelay.key
 
 ; Local IP address and port to listen on. Default is to listen on all addresses
 ; for this host on port 2855, the default IANA MSRP port.
