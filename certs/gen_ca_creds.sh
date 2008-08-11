@@ -12,5 +12,6 @@ certtool --generate-privkey >ca-key.pem
 echo "cn = ${1}" > ca.tmpl
 echo "ca" >> ca.tmpl
 echo "cert_signing_key" >> ca.tmpl
+echo "expiration_days = 10000" >>ca.tmpl
 certtool --generate-self-signed --load-privkey ca-key.pem --template ca.tmpl >ca-cert.pem
 rm ca.tmpl

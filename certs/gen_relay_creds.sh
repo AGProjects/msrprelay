@@ -21,5 +21,6 @@ echo "tls_www_server" >> ${1}.tmpl
 echo "tls_www_client" >> ${1}.tmpl
 echo "encryption_key" >> ${1}.tmpl
 echo "signing_key" >> ${1}.tmpl
+echo "expiration_days = 10000" >>${1}.tmpl
 certtool --generate-certificate --load-privkey ${1}-key.pem --load-ca-certificate ca-cert.pem --load-ca-privkey ca-key.pem --template ${1}.tmpl --outfile ${1}-cert.pem
 rm ${1}.tmpl
