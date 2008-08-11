@@ -8,12 +8,11 @@
 
 ; Global configuration
 [Relay]
-
 ; The X509 certificate file to use during the TLS handshake.
-certificate = /etc/msrprelay/server.crt
+certificate = msrprelay.crt
 
 ; The X509 private key file to use during the TLS handshake.
-key = /etc/msrprelay/server.key
+key = msrprelay.key
 
 ; Local IP address and port to listen on. Default is to listen on all addresses
 ; for this host on port 2855, the default IANA MSRP port.
@@ -38,7 +37,7 @@ key = /etc/msrprelay/server.key
 
 ; The default backend to use for username/password retrieval. Backend names
 ; refer to modules in the backend package.
-backend = database
+backend = memory
 
 ; The hostname to present in Use-Path MSRP URIs. Normally this need not be
 ; specified, as it is fetched automatically from the subject alternative name
