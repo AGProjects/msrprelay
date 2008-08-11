@@ -6,7 +6,7 @@ then
   exit
 fi
 
-echo "Generating TLS credentials for CA \(${1}\)"
+echo "Generating TLS credentials for CA \"${1}\""
 echo "Please make sure you generate enough entropy!"
 certtool --generate-privkey >ca-key.pem
 echo "cn = ${1}" > ca.tmpl
