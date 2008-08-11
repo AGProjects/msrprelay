@@ -1,65 +1,76 @@
 #!/usr/bin/env python
 
-from signal import SIGHUP
+# Copyright (C) 2008 AG Projects
+#
 
-if __name__ == '__main__':
+"""MSRP Relay"""
+
+
+if __name__ == "__main__":
     import sys
     from optparse import OptionParser
     from application.process import process, ProcessError
     from application import log
-
+    from signal import SIGHUP
+    import os.path
     import msrp
 
-    name = 'msrprelay'
-    fullname = 'MSRP Relay'
-    description = 'An open source MSRP Relay'
+    name = "msrprelay"
+    fullname = "MSRP Relay"
+    description = "An open source MSRP Relay"
 
-    config_directory = '/etc/msrprelay'
-    runtime_directory = '/var/run'
-    default_pid = "%s/%s.pid" % (runtime_directory, name)
+    default_pid = os.path.join(msrp.runtime_directory, "relay.pid")
+    default_config = os.path.join(msrp.system_config_directory , msrp.configuration_filename)
 
     parser = OptionParser(version="%%prog %s" % msrp.__version__)
-    parser.add_option("--no-fork", action="store_false", dest="fork", default=1,
-                      help="run the process in the foreground (for debugging)")
-    parser.add_option("--pid", dest="pidFile", default=default_pid,
-                      help="pid file (%s)" % default_pid,
-                      metavar="File")
-
+    parser.add_option("--no-fork", action="store_false", dest="fork", default=1, help="run the process in the foreground (for debugging)")
+    parser.add_option("--pid", dest="pid_file", default=default_pid, help='pid file ("%s")' % default_pid, metavar="File")
+    parser.add_option("--config-file", dest="config_file", default=default_config, help='path to configuration file to read ("%s")' % msrp.configuration_filename, metavar="File")
     (options, args) = parser.parse_args()
 
-    pidFile = options.pidFile
+    pid_file = options.pid_file
+    system_config_directory, msrp.configuration_filename = os.path.split(options.config_file)
+    if system_config_directory != "":
+        msrp.system_config_directory = system_config_directory
 
-    process._system_config_directory = config_directory
+    process._system_config_directory = msrp.system_config_directory
     try:
-        process.runtime_directory = runtime_directory
+        process.runtime_directory = msrp.runtime_directory
     except ProcessError, e:
-        log.msg("Fatal error: %s" % e)
+        log.fatal("Cannot start %s: %s" % (fullname, e))
         sys.exit(1)
 
     if options.fork:
         try:
-            process.daemonize(pidFile)
+            process.daemonize(pid_file)
         except ProcessError, e:
-            log.fatal(str(e))
+            log.fatal("Cannot start %s: %s" % (fullname, e))
             sys.exit(1)
         log.startSyslog(name)
-    else:
-        pass
+
+    log.msg("Starting %s %s" % (fullname, msrp.__version__))
+
+    try:
+        from msrp.relay import Relay
+        if not options.fork:
+            from application.debug.memory import *
+        relay = Relay()
+    except Exception, e:
+        log.fatal("failed to create %s: %s" % (fullname, e))
+        if e.__class__ is not RuntimeError:
+            log.err()
+        sys.exit(1)
+
+    process.signals.add_handler(SIGHUP, lambda signum, frame: relay.reload())
+
+    try:
+        relay.run()
+    except Exception, e:
+        log.fatal("failed to run %s: %s" % (fullname, e))
+        if e.__class__ is not RuntimeError:
+            log.err()
+        sys.exit(1)
+
+    if not options.fork:
         #from application.debug.memory import *
-
-    print "Starting %s %s" % (fullname, msrp.__version__)
-
-    from msrp.relay import Relay
-    try:
-        server = Relay()
-    except Exception, why:
-        print >>sys.stderr, "Failed to create MSRP Relay: %s" % why
-        sys.exit(1)
-
-    process.signals.add_handler(SIGHUP, lambda signum, frame: server.reload())
-
-    try:
-        server.run()
-    except Exception, why:
-        print >>sys.stderr, "Failed to start MSRP Relay: %s" % why
-        sys.exit(1)
+        memory_dump()

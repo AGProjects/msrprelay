@@ -20,8 +20,9 @@ from application.configuration import *
 from twisted.internet.defer import succeed, fail
 
 from msrp.digest import LoginFailed
+from msrp import configuration_filename
 
-config = ConfigFile("config.ini")
+config = ConfigFile(configuration_filename)
 config.cleartext_passwords = True
 config.user_db = dict(config.parser.items("Memory"))
 

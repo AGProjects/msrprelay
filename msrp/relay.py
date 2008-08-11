@@ -39,6 +39,7 @@ from msrp.tls import Certificate, PrivateKey
 from msrp.protocol import *
 from msrp.digest import AuthChallenger, LoginFailed
 from msrp.responses import *
+from msrp import configuration_filename
 
 rand_source = open("/dev/urandom")
 
@@ -62,7 +63,7 @@ def load_default_config():
         key = None
 
 load_default_config()
-config = ConfigFile("config.ini")
+config = ConfigFile(configuration_filename)
 config.read_settings("Relay", RelayConfig)
 
 class Relay(object):
@@ -109,8 +110,8 @@ class Relay(object):
     def reload(self):
         log.debug("Reloading configuration file")
         load_default_config()
-        del ConfigFile.instances["config.ini"]
-        config = ConfigFile("config.ini")
+        del ConfigFile.instances[configuration_filename]
+        config = ConfigFile(configuration_filename)
         config.read_settings("Relay", RelayConfig)
         if not self.listener:
             self._do_init()

@@ -24,6 +24,7 @@ from application.configuration.datatypes import Boolean
 from twisted.internet.threads import deferToThread
 
 from msrp.digest import LoginFailed
+from msrp import configuration_filename
 
 class Config(ConfigSection):
     _datatypes = {"cleartext_passwords": Boolean}
@@ -35,7 +36,7 @@ class Config(ConfigSection):
     password_col = "password"
     ha1_col = "ha1"
 
-config = ConfigFile("config.ini")
+config = ConfigFile(configuration_filename)
 config.read_settings("Database", Config)
 
 class Subscribers(SQLObject):

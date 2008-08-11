@@ -24,6 +24,7 @@ from application.configuration.datatypes import Boolean
 from twisted.internet.threads import deferToThread
 
 from msrp.digest import LoginFailed
+from msrp import configuration_filename
 
 import cjson
 
@@ -36,7 +37,7 @@ class Config(ConfigSection):
     domain_col = "domain"
     profile_col = "profile"
 
-config = ConfigFile("config.ini")
+config = ConfigFile(configuration_filename)
 config.read_settings("SIPThor", Config)
 
 class Subscribers(SQLObject):

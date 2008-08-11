@@ -16,3 +16,8 @@
 #    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 __version__ = "0.9.0"
+
+runtime_directory = "/var/run/msrprelay"
+system_config_directory = "/etc/msrprelay"
+
+configuration_filename = "config.ini"
