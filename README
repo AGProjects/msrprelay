@@ -135,13 +135,18 @@ Getting started
 
 * Make sure you have all the dependencies listed above installed.
 
-* Generate a CA certificate/key pair and use that to a generate certificate/key
-  pair for the host on which the MSRP relay is running. Sample scripts for this
-  are provided in the "certs/" directory.
+* Generate a TS certificate/key pair. For documentation on how to do this, see
+  the "tls" directory.
 
 * Configure the MSRP Relay by copying config.ini.sample to config.ini and
   editing it. At the very least the certificates need to be provided and the
   authentication backend needs to be configured.
+
+* Typically, both TLS certificate/key pair and configuration file would be
+  installed in /etc/msrprelay. This is not needed however, as MSRP Relay
+  looks for the configuration file in its local directory. Alternatively, the
+  configration filename and location may be specified on the command line using
+  the --config-file option.
 
 * If you don't have a running user database to connect to you can test using
   the in-memory backend as described.
