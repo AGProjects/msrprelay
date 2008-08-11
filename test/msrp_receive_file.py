@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 import sys
+sys.path.append(".")
+sys.path.append("..")
 import time
 from base64 import b64encode
 from getpass import getpass
