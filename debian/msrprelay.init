@@ -5,10 +5,10 @@
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
 INSTALL_DIR="/usr/bin"
-RUNTIME_DIR="/var/run"
+RUNTIME_DIR="/var/run/msrprelay"
 
 SERVER="$INSTALL_DIR/msrprelay"
-PID="$RUNTIME_DIR/msrprelay.pid"
+PID="$RUNTIME_DIR/relay.pid"
 
 # Options for the MSRP Relay. Do not include --pid <pidfile>
 # --pid <pidfile> will be added automatically if needed.
@@ -19,7 +19,7 @@ DESC="MSRP Relay"
 
 test -f $SERVER || exit 0
 
-if [ "$PID" != "/var/run/msrprelay.pid" ]; then
+if [ "$PID" != "/var/run/msrprelay/relay.pid" ]; then
     OPTIONS="--pid $PID $OPTIONS"
 fi
 
