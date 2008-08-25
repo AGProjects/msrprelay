@@ -497,7 +497,7 @@ class Peer(object):
                 try:
                     orig_data, timer = self.other_peer.failure_reports.pop(msrpdata.transaction_id)
                 except KeyError:
-                    if msrpdata.transaction_id == self.other_peer.receiving.msrpdata_forward.transaction_id and self.other_peer.receiving.msrpdata_forward.failure_report != "no":
+                    if self.other_peer.receiving and msrpdata.transaction_id == self.other_peer.receiving.msrpdata_forward.transaction_id and self.other_peer.receiving.msrpdata_forward.failure_report != "no":
                         orig_data, timer = self.other_peer.receiving.msrpdata_received, None
                     else:
                         orig_data, timer = None, None
