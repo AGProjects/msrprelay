@@ -253,7 +253,7 @@ class Peer(object):
             address = self.protocol.transport.getPeer()
             return "%s:%d (%s)" % (address.host, address.port, self.state)
         else:
-            return "session %s (%s)" % (self.session.session_id, self.state)
+            return "session %s for %s@%s (%s)" % (self.session.session_id, self.session.username, self.session.realm, self.state)
 
     def log(self, log_func, msg):
         log_func("%s: %s" % (str(self), msg))
@@ -390,7 +390,7 @@ class Peer(object):
                 func = auth_challenger.process_authorization_ha1
             result.addCallback(func, "AUTH", msrpdata.headers["To-Path"].encoded.split()[-1], self.protocol.transport.getPeer().host, **authorization)
             result.addErrback(self._eb_login_failed, msrpdata)
-            result.addCallback(self._cb_login_success, msrpdata, session_id)
+            result.addCallback(self._cb_login_success, msrpdata, session_id, username, realm)
             return result
 
     def _eb_login_failed(self, failure, msrpdata):
@@ -408,7 +408,7 @@ class Peer(object):
         else:
             raise ResponseUnauthorized(msrpdata, "Login failed: %s" % failure.value.args[0])
 
-    def _cb_login_success(self, authentication_info, msrpdata, session_id):
+    def _cb_login_success(self, authentication_info, msrpdata, session_id, username, realm):
         # Check the Expires header, if present.
         if msrpdata.headers.has_key("Expires"):
             expire = msrpdata.headers["Expires"].decoded
@@ -425,7 +425,7 @@ class Peer(object):
         self.invalid_timer = None
         from_path = msrpdata.headers["From-Path"].decoded
         self.path = from_path
-        self.relay.unbound_sessions[session_id] = self.session = Session(self, session_id, expire)
+        self.relay.unbound_sessions[session_id] = self.session = Session(self, session_id, expire, username, realm)
         use_path = copy(from_path)
         use_path.pop()
         use_path = list(reversed(use_path))
@@ -669,11 +669,13 @@ class Peer(object):
 
 class Session(object):
 
-    def __init__(self, source, session_id, expire):
+    def __init__(self, source, session_id, expire, username, realm):
         self.source = source
         self.destination = None
         self.session_id = session_id
         self.expire = expire
+        self.username = username
+        self.realm = realm
 
     def generate_transaction_id(self):
         while True:
