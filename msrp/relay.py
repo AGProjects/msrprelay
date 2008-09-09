@@ -304,6 +304,8 @@ class Peer(object):
         if self.state == "UNBOUND":
             del self.relay.unbound_sessions[self.session.session_id]
         self.state = "DISCONNECTED"
+        if self.session is not None and self is self.session.source:
+            self.log(log.debug, "bytes sent: %d, bytes received: %d" % (self.session.upstream_bytes, self.session.downstream_bytes))
 
     # called by ConnectingFactory
 
@@ -641,7 +643,7 @@ class Peer(object):
                 #self.log(log.debug, "Sending end of SEND message")
                 self.lp_queue.popleft()
                 if data.data_queue:
-                    self.protocol.transport.write(data.data_queue.popleft())
+                    self._send_payload(data.data_queue.popleft())
                 self.protocol.transport.write(data.msrpdata_forward.encode_end(data.continuation))
                 self.sending_data = False
                 self._unquench_check()
@@ -652,7 +654,7 @@ class Peer(object):
                     self._stop_sending()
                 else:
                     #self.log(log.debug, "Sending data for SEND message")
-                    self.protocol.transport.write(chunk)
+                    self._send_payload(chunk)
                     data.pos += len(chunk)
                     self._unquench_check()
         elif self.lp_queue:
@@ -667,6 +669,14 @@ class Peer(object):
     def stopProducing(self):
         pass
 
+    def _send_payload(self, data):
+        if self.session is not None:
+            if self is self.session.source:
+                self.session.upstream_bytes += len(data)
+            else:
+                self.session.downstream_bytes += len(data)
+        self.protocol.transport.write(data)
+
 class Session(object):
 
     def __init__(self, source, session_id, expire, username, realm):
@@ -676,6 +686,8 @@ class Session(object):
         self.expire = expire
         self.username = username
         self.realm = realm
+        self.downstream_bytes = 0
+        self.upstream_bytes = 0
 
     def generate_transaction_id(self):
         while True:
