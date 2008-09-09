@@ -11,6 +11,7 @@ msrprelay (1.0.0) unstable; urgency=low
   * Added commandline option to specify the name of the config file to read.
   * Fixed the "memory" backend to support domain names.
   * Added username@domain and total session bytecount to logging output.
+  * Several miscellaneous fixes based on field experience.
 
  -- Ruud Klaver <ruud@ag-projects.com>  Mon, 08 Sep 2008 19:14:09 +0200
 
