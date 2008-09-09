@@ -1,35 +1,16 @@
 msrprelay (1.0.0) unstable; urgency=low
 
-  * Added username@domain to each log message about a reserved session
-  * Corrected pidfile location in init script
-  * Added additional check in report generation for when failure reports are not required
-  * Updated README on certificate/key and configuration file commandline option
-  * Added tls dir to default certificate and key location in sample config
-  * Added another script to just self-sign a certificate/key pair
-  * Automatically load msrp module location in test scripts
-  * Renamed "certs" dir to "tls"
-  * Changed default names of certificates and keys
-  * Removed no longer present CertificateList object from tls.py imports
-  * Updated msrprelay startup script and added option to specify configuration directory and file
-  * Small fix in CA key/cert generation script output
-  * Added much longer expiration time to certificate generation scripts
-  * Modified sample config file and documentation to reflect using SRV
-  records instead of the server name extension
-  * Moved old test scripts to own dir so they do not get included in distribution
-  * Removed file from MANIFEST.in that was no longer present
-  * Modified msrp_send_file.py and msrp_receive_file.py to reflect not using
-  the server name extension, but putting the realm in the To-Path instead
-  * Simplified relay operation and configuration by using the host in the
-  To-Path URI of the AUTH request as the realm during authentication
-  * Fixed memory backend to include domain names
-  * Use X509Identity from python-gnutls
-  * Changed runtime directory to /var/run
-  * Include msrp-send-file and msrp-receive-file scripts in installer
-  * Removed all references to CAs and CRLs, removed certificate checking
-  accordingly, modified config.ini.sample to reflect, put port options
-  together with address
-  * Explicitly mentioned in the sample config file that the default domain needs a Domain config section
-  * Update sample config file with a proper description for the relay hostname
+  * Removed per-domain configuration and certificates in favour of detecting
+    the SIP domain from the To-Path. This assumes SRV records are used to
+    look up the MSRP relay. This also elimites the need for using the TLS
+    server name extension.
+  * Removed any references to CAs and CRLs.
+  * Simplified certificate generation.
+  * Cleaned up test script directory.
+  * Added own runtime directory in /var/run to store runtime files.
+  * Added commandline option to specify the name of the config file to read.
+  * Fixed the "memory" backend to support domain names.
+  * Added username@domain and total session bytecount to logging output.
 
  -- Adrian Georgescu <ag@ag-projects.com>  Mon, 08 Sep 2008 19:14:09 +0200
 
