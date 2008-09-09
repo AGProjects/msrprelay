@@ -12,7 +12,7 @@ msrprelay (1.0.0) unstable; urgency=low
   * Fixed the "memory" backend to support domain names.
   * Added username@domain and total session bytecount to logging output.
 
- -- Adrian Georgescu <ag@ag-projects.com>  Mon, 08 Sep 2008 19:14:09 +0200
+ -- Ruud Klaver <ruud@ag-projects.com>  Mon, 08 Sep 2008 19:14:09 +0200
 
 msrprelay (0.9.0) unstable; urgency=low
 
