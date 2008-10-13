@@ -88,19 +88,3 @@ uri = mysql://user:pass@db/openser
 [Memory]
 ; alice@example.com = 1234
 ; bob@example.com = 1234
-
-; Per domain configuration
-
-[Domain:example.com]
-; The hostname of this MSRP relay, within the current domain. This is used for
-; MSRP URI generation and checking.
-; hostname = relay.example.com
-
-; The password/username backend to use, if the default one is not to be used.
-; backend = database
-
-; The X509 certificate file to use during the TLS handshake
-certificate = /etc/msrprelay/server.crt
-
-; The X509 private key file to use during the TLS handshake
-key = /etc/msrprelay/server.key
