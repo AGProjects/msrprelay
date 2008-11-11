@@ -347,7 +347,7 @@ class Peer(object):
         elif (msrpdata.method == "SEND" or (msrpdata.method is not None and msrpdata.method != "REPORT" and RelayConfig.allow_other_methods)) and len(to_path) > 1:
             session_id = to_path[0].session_id
             try:
-                session = self.relay.unbound_sessions.pop(session_id)
+                session = self.relay.unbound_sessions[session_id]
             except KeyError:
                 raise ResponseNoSession(msrpdata)
             self.log(log.debug, "Found matching unbound session %s" % session.session_id)
@@ -449,6 +449,7 @@ class Peer(object):
 
     def got_destination(self, other_peer):
         self.state = "ESTABLISHED"
+        del self.relay.unbound_sessions[self.session.session_id]
         self.session.destination = other_peer
         self.other_peer = other_peer
 
