@@ -2,8 +2,9 @@ msrprelay (1.0.1) unstable; urgency=low
 
   * Remove the session from unbound_session when we start trying to make an
     outbound connection
+  * Added instructions for how to install or build the Debian package
 
- -- Adrian Georgescu <ag@ag-projects.com>  Thu, 27 Nov 2008 10:22:18 +0100
+ -- Adrian Georgescu <ag@ag-projects.com>  Thu, 27 Nov 2008 10:44:27 +0100
 
 msrprelay (1.0.0) unstable; urgency=low
 
