@@ -1,3 +1,10 @@
+msrprelay (1.0.1) unstable; urgency=low
+
+  * Remove the session from unbound_session when we start trying to make an
+    outbound connection
+
+ -- Adrian Georgescu <ag@ag-projects.com>  Thu, 27 Nov 2008 10:22:18 +0100
+
 msrprelay (1.0.0) unstable; urgency=low
 
   * Removed per-domain configuration and certificates in favour of detecting

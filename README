@@ -67,6 +67,42 @@ The software has the following dependencies:
   http://sqlobject.org
 
 
+Building the Debian package
+---------------------------
+
+Install darcs version control tool. Darcs is available as a Debian package
+and at http://darcs.net.
+
+You need the following packages before trying to build a debian package:
+
+sudo apt-get install devscripts python-dnspython \
+python-setuptools python-application python-twisted \
+build-essential cdbs debhelper python-all-dev python-support
+
+darcs get http://devel.ag-projects.com/repositories/msrprelay
+
+The software is downloaded under the msrprelay directory. Use the next
+step to update it later:
+
+cd msrprelay
+darcs pull
+
+debuild clean
+python setup.py sdist
+
+# Go to the dist directory and untar the tarball just created:
+
+cd dist
+tar xvzf *.tar.gz
+
+# Change to the distribution directory and:
+
+cd msrprelay-X.X.X
+debuild
+
+You will now have a Debian package in the upper level directory.
+
+
 Backends
 --------
 
