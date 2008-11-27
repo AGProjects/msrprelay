@@ -67,6 +67,29 @@ The software has the following dependencies:
   http://sqlobject.org
 
 
+Debian installation
+-------------------
+
+For Debian and Ubuntu on an i386 architecture there is an official public
+repository provided by AG Projects.
+
+Install the AG Projects debian software signing key:
+
+wget http://download.ag-projects.com/agp-debian-gpg.key
+sudo apt-key add agp-debian-gpg.key
+
+Add these lines at the end of etc/apt/sources.list
+
+# AG Projects software
+deb http://ag-projects.com/debian unstable main
+deb-src http://ag-projects.com/debian unstable main
+
+Then install the software:
+
+sudo apt-get update
+sudo apt-get install msrprelay
+
+
 Building the Debian package
 ---------------------------
 
@@ -101,6 +124,41 @@ cd msrprelay-X.X.X
 debuild
 
 You will now have a Debian package in the upper level directory.
+
+
+Running the server
+------------------
+
+* Make sure you have all the dependencies listed above installed.
+
+* Generate a TLS certificate/key pair. For documentation on how to do this, see
+  the "tls" directory.
+
+* Configure the MSRP Relay by copying config.ini.sample to config.ini and
+  editing it. At the very least the certificates need to be provided and the
+  authentication backend needs to be configured.
+
+* Typically, both TLS certificate/key pair and configuration file would be
+  installed in /etc/msrprelay. This is not needed however, as MSRP Relay
+  looks for the configuration file in its local directory. Alternatively, the
+  configration filename and location may be specified on the command line using
+  the --config-file option.
+
+* If you don't have a running user database to connect to you can test using
+  the in-memory backend as described.
+
+* Provision the appropriate A and SRV records in your DNS server, as described
+  below. If you want to avoid doing this, the relay can operate in
+  single-domain mode as described above.
+
+* Start the MSRP Relay, either in the console by executing ./msrprelay --no-fork
+  or as a daemon, which is the default behaviour. This can also be done using
+  the init.d script provided. If the MSRP Relay runs as a deamon it will log to
+  syslog.
+
+* The "test/" directory contains a number of test scripts and a simple file
+  file transfer sender and receiver. See the README in the "test/" directory
+  for documentation on the latter.
 
 
 Backends
@@ -165,40 +223,6 @@ before doing an AUTH. Also the MSRP will initiate every time a new connection
 to other endpoints so that congestion control can be performed on a session
 basis.
 
-
-Getting started
----------------
-
-* Make sure you have all the dependencies listed above installed.
-
-* Generate a TS certificate/key pair. For documentation on how to do this, see
-  the "tls" directory.
-
-* Configure the MSRP Relay by copying config.ini.sample to config.ini and
-  editing it. At the very least the certificates need to be provided and the
-  authentication backend needs to be configured.
-
-* Typically, both TLS certificate/key pair and configuration file would be
-  installed in /etc/msrprelay. This is not needed however, as MSRP Relay
-  looks for the configuration file in its local directory. Alternatively, the
-  configration filename and location may be specified on the command line using
-  the --config-file option.
-
-* If you don't have a running user database to connect to you can test using
-  the in-memory backend as described.
-
-* Provision the appropriate A and SRV records in your DNS server, as described
-  below. If you want to avoid doing this, the relay can operate in
-  single-domain mode as described above.
-
-* Start the MSRP Relay, either in the console by executing ./msrprelay --no-fork
-  or as a daemon, which is the default behaviour. This can also be done using
-  the init.d script provided. If the MSRP Relay runs as a deamon it will log to
-  syslog.
-
-* The "test/" directory contains a number of test scripts and a simple file
-  file transfer sender and receiver. See the README in the "test/" directory
-  for documentation on the latter.
 
 
 DNS setup
