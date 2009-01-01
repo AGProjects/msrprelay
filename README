@@ -43,29 +43,7 @@ creation protocol such as the Session Initiation Protocol (SIP). MSRP Sessions
 are defined in RFC 4975.
 
 
-Dependencies
-------------
-
-This software was designed to run on Linux systems, it has been developed and
-tested on Linux Debian unstable distribution.
-
-The software has the following dependencies:
-
-- Python >=2.4
-  http://python.org
-- Twisted >=2.5.0
-  http://twistedmatrix.com
-- GnuTLS >=1.4.4, <=2.1
-  http://www.gnu.org/software/gnutls/
-- python-gnutls >=1.1.5
-  http://pypi.python.org/pypi/python-gnutls/
-- python-application >=1.0.9
-  http://pypi.python.org/pypi/python-application
-- SQLObject (only if the database backend is used)
-  http://sqlobject.org
-
-
-Backends
+Features
 --------
 
 The software supports different backend modules for SIP account credentials
@@ -122,52 +100,14 @@ to other endpoints so that congestion control can be performed on a session
 basis.
 
 
-Getting started
----------------
+Installation             
+------------             
 
-* Make sure you have all the dependencies listed above installed.
-
-* Generate a TS certificate/key pair. For documentation on how to do this, see
-  the "tls" directory.
-
-* Configure the MSRP Relay by copying config.ini.sample to config.ini and
-  editing it. At the very least the certificates need to be provided and the
-  authentication backend needs to be configured.
-
-* Typically, both TLS certificate/key pair and configuration file would be
-  installed in /etc/msrprelay. This is not needed however, as MSRP Relay
-  looks for the configuration file in its local directory. Alternatively, the
-  configration filename and location may be specified on the command line using
-  the --config-file option.
-
-* If you don't have a running user database to connect to you can test using
-  the in-memory backend as described.
-
-* Provision the appropriate A and SRV records in your DNS server, as described
-  below. If you want to avoid doing this, the relay can operate in
-  single-domain mode as described above.
-
-* Start the MSRP Relay, either in the console by executing ./msrprelay --no-fork
-  or as a daemon, which is the default behaviour. This can also be done using
-  the init.d script provided. If the MSRP Relay runs as a deamon it will log to
-  syslog.
-
-* The "test/" directory contains a number of test scripts and a simple file
-  file transfer sender and receiver. See the README in the "test/" directory
-  for documentation on the latter.
+See INSTALL file.
 
 
-DNS setup
----------
-
-For each domain served by the relay the following DNS record must be added to
-the name server authoritative for the domain:
-
-_msrps._tcp.example.com. IN SRV	0 0 2855 msrprelay.example.com.
-msrprelay.example.com. IN A 10.0.0.1
-
-Replace the domain name, hostname and IP address with the real ones.
-
+Free support
+------------
 
 The project is supported via the wiki collaboration system provided at
 http://msrprelay.org
