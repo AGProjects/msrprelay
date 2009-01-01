@@ -1,0 +1,141 @@
+
+Installation
+------------
+
+For Debian testing or unstable there is an official public repository
+provided by AG Projects. Install the AG Projects debian software signing
+key:
+
+wget http://download.ag-projects.com/agp-debian-gpg.key 
+apt-key add agp-debian-gpg.key
+
+Add these lines in etc/apt/sources.list
+
+# AG Projects software
+deb http://ag-projects.com/debian unstable main
+deb-src http://ag-projects.com/debian unstable main
+
+After that, run:
+
+apt-get update
+apt-get install msrprelay
+
+If you have installed the debian package you can skip forward to the
+'Configure the server' section.
+
+For non Debian installations you must perform the following steps:
+
+ * Download and install dependencies
+ * Download and install MSRPRelay
+
+
+Download and install dependencies
+---------------------------------
+
+The software has been developed and tested on Linux Debian unstable
+distribution. 
+
+The software has the following dependencies:
+
+ * Python >=2.4 http://python.org 
+ * Twisted >=2.5.0 http://twistedmatrix.com
+ * GnuTLS >=1.4.4 <=2.1 http://www.gnu.org/software/gnutls/
+ * python-gnutls >=1.1.5 http://pypi.python.org/pypi/python-gnutls/
+ * python-application >=1.0.9 http://pypi.python.org/pypi/python-application
+ * SQLObject http://sqlobject.org
+
+
+Download and install MSRPRelay
+------------------------------
+
+The software can be downloaded as a tar archive from:
+
+http://download.ag-projects.com/MSRPRelay/
+
+Extract it using tar xzvf msrprelay-version.tar.gz and change directory to
+the newly created msrprelay directory.
+
+The source code is managed using darcs version control tool. The darcs
+repository can be fetched with:
+
+darcs get http://devel.ag-projects.com/repositories/msrprelay
+
+To obtain the incremental changes after the initial get, go to the msrprelay
+directory and run:
+
+cd msrprelay
+darcs pull -a
+
+Install the software:
+
+cd msrprelay
+python setup.py install
+
+
+Configure the server
+--------------------
+
+A sample configuration file is provided as config.ini.sample. All configuration
+options are documented in this file.
+
+Configure the MSRP Relay by copying config.ini.sample to config.ini and
+editing it. At the very least the certificates need to be provided and the
+authentication backend needs to be configured.
+
+Generate a TLS certificate/key pair. For documentation on how to do this,
+see the "tls" directory.
+
+Typically, both TLS certificate/key pair and configuration file would be
+installed in /etc/msrprelay. This is not needed however, as MSRP Relay looks
+for the configuration file in its local directory. Alternatively, the
+configuration filename and location may be specified on the command line
+using the --config-file option.
+
+If you don't have a running user database to connect to you can test using
+the in-memory backend as described.
+
+The software will reload its configuration file when it receives the HUP
+signal. All of the already established sessions will continue to operate using
+the old settings until a disconnection occurs within this session. This allows
+for changes in the configuration without disruption of service.
+
+Note: at this moment the backend configurations are not re-read.
+
+
+Configure the DNS
+-----------------
+
+For each domain served by the relay the following DNS record must be added to
+the name servers authoritative for the domain:
+
+_msrps._tcp.example.com. IN SRV	0 0 2855 msrprelay.example.com.
+msrprelay.example.com. IN A 10.0.0.1
+
+Replace the domain name, hostname and IP address with the real ones.
+
+
+Running the server
+------------------
+
+Start the MSRPRelay, either by executing:
+
+./msrprelay --no-fork 
+
+or as a daemon, which is the default behaviour. 
+
+This can also be done using the init.d script:
+
+/etc/init.d/msrprelay start
+
+When started as a deamon MSRPRelay will log its messages to syslog.
+
+
+Testing the server
+------------------
+
+The "test/" directory contains a number of test scripts and a simple file
+transfer sender and receiver. See the README in the "test/" directory for
+documentation on the latter.
+
+You can download an MSRP client from http://SipSimpleClient.com
+
