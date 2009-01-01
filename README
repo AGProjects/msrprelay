@@ -7,20 +7,18 @@ http://ag-projects.com
 
 Author: Ruud Klaver
 
-
-License
--------
-
-This software is licensed according to the GNU General Public License version 2.
-See LICENSE file for more details.
+Home page: http://msrprelay.org
 
 
-Purpose
--------
+Description
+-----------
 
 This software implements an MSRP relay, which is an extension to the MSRP
 protocol. Its main role is to help NAT traversal of Interactive Messaging and
 file transfer sessions for SIP/MSRP endpoints located behind NAT.
+
+The software is licensed according to the GNU General Public License version
+2. See LICENSE file for more details.
 
 
 Background
@@ -67,71 +65,69 @@ The software has the following dependencies:
   http://sqlobject.org
 
 
-Debian installation
--------------------
+Backends
+--------
 
-For Debian and Ubuntu on an i386 architecture there is an official public
-repository provided by AG Projects.
+The software supports different backend modules for SIP account credentials
+storage. At the moment, two backends are supported.
 
-Install the AG Projects debian software signing key:
+* The database backend allows the MSRP Relay to consult a database through
+  SQLObject. SQLObject supports several database types, including MySQL and
+  SQlite. For a complete listing, see the SQLObject documentation. Out of
+  the box, the software is designed to work in combinations with the
+  subscriber database used by OpenSER (see http://openser.org).
+* The second backend is an in-memory backend, which can be used for testing
+  purposes. Username and password combinations can be specified in the
+  configuration file.
 
-wget http://download.ag-projects.com/agp-debian-gpg.key
-sudo apt-key add agp-debian-gpg.key
+Multi-domain operation
 
-Add these lines at the end of etc/apt/sources.list
+This MSRP Relay is designed to operate in a multi-domain setup. The domains
+relate to the SIP domains served by a SIP Proxy/Registrar (e.g. example.com).
 
-# AG Projects software
-deb http://ag-projects.com/debian unstable main
-deb-src http://ag-projects.com/debian unstable main
+In this setup the MSRP Relay runs on a host that is referenced by a DNS A
+record (load balancing between several MSRP relays can be achieved by having
+this A record refer to more than one IP address). As an example this would be
+"msrprelay.example.com". The MSRP Relay has one TLS certificate/key pair
+containing this hostname in the subject alternative name.
 
-Then install the software:
+For each SIP domain it serves, a DNS SRV record is provisioned. This could be
+for example: "_msrps._tcp.msrprelay.org -> msrprelay.example.com:2855".
 
-sudo apt-get update
-sudo apt-get install msrprelay
+The client that wishes to reserve a session at the MSRP Relay active within
+its SIP domain then resolves the SRV record for its domain, connects to the
+relay using TLS and sends an AUTH request with its SIP domain as MSRP URI
+in the To-Path header, like such:" msrps://msrprelay.org;tcp".
 
+The MSRP relay then uses the host part of this MSRP URI as domain to
+authenticate the user in.
 
-Building the Debian package
----------------------------
+To facilitate testing and remove the need to provision SRV records, taking the
+authentication domain from the To-Path MSRP URI can be disabled by manually
+specifying the domain in the configuration file. In this case the
+authenticating client should put the actual hostname of the MSRP Relay into
+the To-Path MSRP URI of an AUTH request. Note that this implies single domain
+operation.
 
-Install darcs version control tool. Darcs is available as a Debian package
-and at http://darcs.net.
+Session management
 
-You need the following packages before trying to build a debian package:
+The MSRP Relay was specifically designed to support end-to-end congestion
+control for MSRP sessions, in order to support high volume data transfers, such
+as file transfers. For this reason, session sharing between connections cannot
+be used and each TCP/TLS connection supports only one session. 
 
-sudo apt-get install devscripts python-dnspython \
-python-setuptools python-application python-twisted \
-build-essential cdbs debhelper python-all-dev python-support
-
-darcs get http://devel.ag-projects.com/repositories/msrprelay
-
-The software is downloaded under the msrprelay directory. Use the next
-step to update it later:
-
-cd msrprelay
-darcs pull
-
-debuild clean
-python setup.py sdist
-
-# Go to the dist directory and untar the tarball just created:
-
-cd dist
-tar xvzf *.tar.gz
-
-# Change to the distribution directory and:
-
-cd msrprelay-X.X.X
-debuild
-
-You will now have a Debian package in the upper level directory.
+This means that the client will need to open a new connection for each session
+before doing an AUTH. Also the MSRP will initiate every time a new connection
+to other endpoints so that congestion control can be performed on a session
+basis.
 
 
-Running the server
-------------------
+Getting started
+---------------
 
 * Make sure you have all the dependencies listed above installed.
 
-* Generate a TLS certificate/key pair. For documentation on how to do this, see
+* Generate a TS certificate/key pair. For documentation on how to do this, see
   the "tls" directory.
 
 * Configure the MSRP Relay by copying config.ini.sample to config.ini and
@@ -161,70 +157,6 @@ Running the server
   for documentation on the latter.
 
 
-Backends
---------
-
-The software supports different backend modules for SIP account credentials
-storage. At the moment, two backends are supported.
-
-The database backend allows the MSRP Relay to consult a database through
-SQLObject. SQLObject supports several database types, including MySQL and
-SQlite. For a complete listing, see the SQLObject documentation.
-
-Out of the box, the software is designed to work in combinations with the
-subscriber database used by OpenSER (see http://openser.org).
-
-The second backend is an in-memory backend, which can be used for testing
-purposes. Username and password combinations can be specified in the
-configuration file.
-
-
-Multi-domain operation
-----------------------
-
-This MSRP Relay is designed to operate in a multi-domain setup. The domains
-relate to the SIP domains served by a SIP Proxy/Registrar (e.g. example.com).
-
-In this setup the MSRP Relay runs on a host that is referenced by a DNS A
-record (load balancing between several MSRP relays can be achieved by having
-this A record refer to more than one IP address). As an example this would be
-"msrprelay.example.com". The MSRP Relay has one TLS certificate/key pair
-containing this hostname in the subject alternative name.
-
-For each SIP domain it serves, a DNS SRV record is provisioned. This could be
-for example: "_msrps._tcp.msrprelay.org -> msrprelay.example.com:2855".
-
-The client that wishes to reserve a session at the MSRP Relay active within
-its SIP domain then resolves the SRV record for its domain, connects to the
-relay using TLS and sends an AUTH request with its SIP domain as MSRP URI
-in the To-Path header, like such:" msrps://msrprelay.org;tcp".
-
-The MSRP relay then uses the host part of this MSRP URI as domain to
-authenticate the user in.
-
-To facilitate testing and remove the need to provision SRV records, taking the
-authentication domain from the To-Path MSRP URI can be disabled by manually
-specifying the domain in the configuration file. In this case the
-authenticating client should put the actual hostname of the MSRP Relay into
-the To-Path MSRP URI of an AUTH request. Note that this implies single domain
-operation.
-
-
-Session management
-------------------
-
-The MSRP Relay was specifically designed to support end-to-end congestion
-control for MSRP sessions, in order to support high volume data transfers, such
-as file transfers. For this reason, session sharing between connections cannot
-be used and each TCP/TLS connection supports only one session. 
-
-This means that the client will need to open a new connection for each session
-before doing an AUTH. Also the MSRP will initiate every time a new connection
-to other endpoints so that congestion control can be performed on a session
-basis.
-
-
-
 DNS setup
 ---------
 
@@ -237,16 +169,14 @@ msrprelay.example.com. IN A 10.0.0.1
 Replace the domain name, hostname and IP address with the real ones.
 
 
-Configuration
--------------
+The project is supported via the wiki collaboration system provided at
+http://msrprelay.org
 
-A sample configuration file is provided as config.ini.sample. All configuration
-options are documented in this file.
+To open ticket please Register first. The ticketing support system is
+available only for registered users. Please beware that the support is
+provided by the community on a best-effort basis.
 
-The software will reload its configuration file when it receives the HUP
-signal. All of the already established sessions will continue to operate using
-the old settings until a disconnection occurs within this session. This allows
-for changes in the configuration without disruption of service.
+Commercial support is available by purchasing:
 
-Note: at this moment the backend configurations are not re-read.
+Multimedia Service Platform: http://ag-projects.com/Products
 
