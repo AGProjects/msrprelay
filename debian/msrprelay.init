@@ -1,6 +1,14 @@
 #!/bin/sh
 #
-# starts and stops the MSRP Relay
+### BEGIN INIT INFO
+# Provides:          openxcap
+# Required-Start:    $syslog $network $local_fs $time
+# Required-Stop:     $syslog $network $local_fs
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start the MSRP relay
+# Description:       Start the MSRP relay
+### END INIT INFO
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
