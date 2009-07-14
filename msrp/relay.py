@@ -25,6 +25,11 @@ else:
     if Version.parse(python_application_version) < version_needed:
         raise ImportError("python-application of version %s needed, found version %s" % (version_needed, python_application_version))
     del python_application_version, version_needed
+    from gnutls import __version__ as python_gnutls_version
+    version_needed = Version(1,1,5)
+    if Version.parse(python_gnutls_version) < version_needed:
+        raise ImportError("python-gnutls of version %s needed, found version %s" % (version_needed, python_gnutls_version))
+    del python_gnutls_version, version_needed
 
 from copy import copy
 from base64 import b64encode
