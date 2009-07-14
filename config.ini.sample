@@ -7,16 +7,22 @@
 ; - a configuration section per username/password retrieval backend
 
 ; Global configuration
+
 [Relay]
-; The X509 certificate file to use during the TLS handshake.
+
+; mandatory setting
+; The X509 certificate file to use during the TLS handshake. A path that
+; does not start with / is relative to /etc/msrprelay/ folder
 certificate = tls/msrprelay.crt
 
-; The X509 private key file to use during the TLS handshake.
+; mandatory setting
+; The X509 private key file to use during the TLS handshake. A path that
+; does not start with / is relative to /etc/msrprelay/ folder
 key = tls/msrprelay.key
 
 ; Local IP address and port to listen on. Default is to listen on all addresses
 ; for this host on port 2855, the default IANA MSRP port.
-; address = 0.0.0.0:2855
+address = 0.0.0.0:2855
 
 ; Allow other methods besides SEND to be forwarded through the relay
 ; allow_other_methods = No
@@ -35,6 +41,7 @@ key = tls/msrprelay.key
 ; The number of seconds a AUTH challenge, once issued, remains valid
 ; auth_challenge_expiration_time = 15
 
+; mandatory setting
 ; The default backend to use for username/password retrieval. Backend names
 ; refer to modules in the backend package.
 backend = memory
@@ -56,14 +63,17 @@ backend = memory
 ; in increasing order of verbosity. The default value is DEBUG
 ; log_level = DEBUG
 
+;
 ; Backend configuration
 ;
-; The Database backend does username/password retrieval from a database
-; accessible my SQLObject. By default this is configured to access an OpenSER
-; database. As the table and column names are configurable this could be any
-; database.
 
 [Database]
+
+; The Database backend does username/password retrieval from a database
+; accessible my SQLObject. By default this is configured to access an
+; OpenSER database. As the table and column names are configurable this
+; could be any database.
+
 ; The URI used to access the database, including username and password. Check
 ; the SQLObject documentation for syntax.
 uri = mysql://user:pass@db/openser
@@ -87,8 +97,12 @@ uri = mysql://user:pass@db/openser
 ; The ha1 column, consulted if cleartext_passwords is not set
 ; ha1_col = ha1
 
-; In-memory backend. Each entry is a username/password pair. Only use for
-; testing purposes.
+
 [Memory]
-; alice@example.com = 1234
-; bob@example.com = 1234
+
+; A simple to use memory backend useful for testing purposes. Each entry is
+; a username/password pair.
+
+alice@example.com = 1234
+bob@example.com = 1234
+
