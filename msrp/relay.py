@@ -37,7 +37,7 @@ from collections import deque
 
 from application import log
 from application.configuration import *
-from application.configuration.datatypes import NetworkAddress, Boolean
+from application.configuration.datatypes import NetworkAddress, Boolean, LogLevel
 from application.python.util import Singleton
 from application.system import default_host_ip
 
@@ -76,6 +76,7 @@ def load_default_config():
         log_failed_auth = False
         certificate = ConfigSetting(type=Certificate, value=None)
         key = ConfigSetting(type=PrivateKey, value=None)
+        log_level = ConfigSetting(type=LogLevel, value=log.level.DEBUG)
 
 load_default_config()
 config = ConfigFile(configuration_filename)
@@ -91,6 +92,7 @@ class Relay(object):
 
     def _do_init(self):
         self.listener = None
+        log.level.current = RelayConfig.log_level
         self.backend = __import__("msrp.backend.%s" % RelayConfig.backend.lower(), globals(), locals(), [""]).Checker()
         if not RelayConfig.debug_notls:
             if RelayConfig.certificate is None:

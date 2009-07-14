@@ -52,6 +52,10 @@ backend = memory
 ; this, and only this, domain.
 ; default_domain = example.com
 
+; The logging level can be one of CRITICAL, ERROR, WARNING, INFO and DEBUG,
+; in increasing order of verbosity. The default value is DEBUG
+; log_level = DEBUG
+
 ; Backend configuration
 ;
 ; The Database backend does username/password retrieval from a database
