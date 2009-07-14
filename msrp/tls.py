@@ -16,11 +16,10 @@
 #    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 __all__ = ['Certificate', 'PrivateKey']
 
-from gnutls.crypto import X509Certificate,  X509PrivateKey
+from gnutls.crypto import X509Certificate, X509PrivateKey
 
 from application import log
 from application.process import process
-from application.configuration.datatypes import StringList
 
 class _FileError(Exception): pass
 
@@ -45,7 +44,7 @@ class Certificate(object):
             try:
                 return X509Certificate(file_content(value))
             except Exception, e:
-                log.warn("Certificate file '%s' could not be loaded: %s" % (value, str(e)))
+                raise ValueError("Certificate file '%s' could not be loaded: %s" % (value, str(e)))
                 return None
         else:
             raise TypeError, 'value should be a string'
@@ -58,7 +57,7 @@ class PrivateKey(object):
             try:
                 return X509PrivateKey(file_content(value))
             except Exception, e:
-                log.warn("Private key file '%s' could not be loaded: %s" % (value, str(e)))
+                raise ValueError("Private key file '%s' could not be loaded: %s" % (value, str(e)))
                 return None
         else:
             raise TypeError, 'value should be a string'

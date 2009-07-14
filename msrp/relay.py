@@ -93,6 +93,10 @@ class Relay(object):
         self.listener = None
         self.backend = __import__("msrp.backend.%s" % RelayConfig.backend.lower(), globals(), locals(), [""]).Checker()
         if not RelayConfig.debug_notls:
+            if RelayConfig.certificate is None:
+                raise RuntimeError("TLS certificate file is not specified in configuration or is invalid")
+            if RelayConfig.key is None:
+                raise RuntimeError("TLS private key file is not specified in configuration or is invalid")
             self.credentials = X509Credentials(RelayConfig.certificate, RelayConfig.key)
             self.credentials.session_params.protocols = (PROTO_TLS1_1, PROTO_TLS1_0)
             self.credentials.session_params.kx_algorithms = (KX_RSA,)
@@ -102,7 +106,7 @@ class Relay(object):
         if RelayConfig.hostname != "":
             self.hostname = RelayConfig.hostname
             if not RelayConfig.debug_notls and self.hostname not in RelayConfig.certificate.alternative_names.dns:
-                log.fatal('The specified MSRP Relay hostname "%s" is not set as DNS subject alternative name in the TLS certificate.' % self.hostname)
+                raise RuntimeError('The specified MSRP Relay hostname "%s" is not set as DNS subject alternative name in the TLS certificate.' % self.hostname)
         elif not RelayConfig.debug_notls:
             self.hostname = RelayConfig.certificate.alternative_names.dns[0] # Just grab the first one?
         elif RelayConfig.address[0] != "0.0.0.0":
@@ -120,7 +124,6 @@ class Relay(object):
     def run(self):
         self._do_run()
         reactor.run()
-        log.debug("Started MSRP relay")
 
     def reload(self):
         log.debug("Reloading configuration file")
@@ -129,11 +132,20 @@ class Relay(object):
         config = ConfigFile(configuration_filename)
         config.read_settings("Relay", RelayConfig)
         if not self.listener:
-            self._do_init()
+            try:
+                self._do_init()
+            except RuntimeError, e:
+                log.fatal("Error reloading configuration file: %s" % e)
+                reactor.stop()
         else:
             result = self.listener.stopListening()
             result.addCallback(lambda x: self._do_init())
-            result.addCallback(lambda x: self._do_run())
+            result.addCallbacks(lambda x: self._do_run(), self._reload_failure)
+
+    def _reload_failure(self, failure):
+        failure.trap(RuntimeError)
+        log.fatal("Error reloading configuration file: %s" % failure.value)
+        reactor.stop()
 
     def generate_uri(self):
         return URI("%s" % self.hostname, port = RelayConfig.address[1], use_tls = not RelayConfig.debug_notls)
