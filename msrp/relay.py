@@ -265,9 +265,6 @@ class Peer(object):
             result = maybeDeferred(self._unbound_peer_data, msrpdata)
             result.addErrback(self._cb_catch_response, msrpdata)
         else:
-            if msrpdata.method == "SEND" or (msrpdata.method != "REPORT" and RelayConfig.allow_other_methods):
-                # NB: REPORT messages will not have their body forwarded, we do not support this.
-                self.receiving = ForwardingData(msrpdata)
             self._bound_peer_data(msrpdata)
 
     def write_chunk(self, chunk):
@@ -521,6 +518,7 @@ class Peer(object):
                 if forward.method == "REPORT":
                     self.other_peer.enqueue(forward)
                 else:
+                    self.receiving = ForwardingData(msrpdata)
                     self.receiving.msrpdata_forward = forward
                     self.other_peer.enqueue(self.receiving)
             else:
