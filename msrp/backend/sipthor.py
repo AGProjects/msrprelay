@@ -29,7 +29,7 @@ from msrp import configuration_filename
 import cjson
 
 class Config(ConfigSection):
-    cleartext_passwords = ConfigSetting(type=Boolean, value=True)
+    cleartext_passwords = True
     uri = "mysql://user:pass@db/sipthor"
     subscriber_table = "sip_accounts"
     username_col = "username"

@@ -65,7 +65,7 @@ def load_default_config():
         address = ConfigSetting(type=NetworkAddress, value=NetworkAddress("0.0.0.0:2855"))
         hostname = ""
         default_domain = ""
-        allow_other_methods = ConfigSetting(type=Boolean, value=False)
+        allow_other_methods = False
         session_expiration_time_minimum = 60
         session_expiration_time_default = 600
         session_expiration_time_maximum = 3600
