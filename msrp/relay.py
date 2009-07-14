@@ -46,11 +46,10 @@ rand_source = open("/dev/urandom")
 def load_default_config():
     global RelayConfig
     class RelayConfig(ConfigSection):
-        _datatypes = {"address": NetworkAddress, "allow_other_methods": Boolean, "certificate": Certificate, "key": PrivateKey}
-        address = NetworkAddress("0.0.0.0:2855")
+        address = ConfigSetting(type=NetworkAddress, value=NetworkAddress("0.0.0.0:2855"))
         hostname = ""
         default_domain = ""
-        allow_other_methods = False
+        allow_other_methods = ConfigSetting(type=Boolean, value=False)
         session_expiration_time_minimum = 60
         session_expiration_time_default = 600
         session_expiration_time_maximum = 3600
@@ -59,8 +58,8 @@ def load_default_config():
         max_auth_attempts = 3
         debug_notls = False
         log_failed_auth = False
-        certificate = None
-        key = None
+        certificate = ConfigSetting(type=Certificate, value=None)
+        key = ConfigSetting(type=PrivateKey, value=None)
 
 load_default_config()
 config = ConfigFile(configuration_filename)

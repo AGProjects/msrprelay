@@ -27,8 +27,7 @@ from msrp.digest import LoginFailed
 from msrp import configuration_filename
 
 class Config(ConfigSection):
-    _datatypes = {"cleartext_passwords": Boolean}
-    cleartext_passwords = True
+    cleartext_passwords = ConfigSetting(type=Boolean, default=True)
     uri = "mysql://user:pass@db/openser"
     subscriber_table = "subscriber"
     username_col = "username"
