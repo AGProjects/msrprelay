@@ -9,7 +9,7 @@ Standards-Version: 3.8.0
 
 Package: msrprelay
 Architecture: all
-Depends: ${python:Depends}, python-twisted (>= 2.5.0), python-application (>= 1.0.9), python-gnutls (>= 1.1.5), python-sqlobject (>= 0.9.3)
+Depends: ${python:Depends}, python-twisted (>= 2.5.0), python-application (>= 1.1.3), python-gnutls (>= 1.1.5), python-sqlobject (>= 0.9.3)
 XB-Python-Version: ${python:Versions}
 Description: MSRP Relay, a RFC 4976 compatible IM/File transfer relay 
  This software implements an MSRP relay, which is an extension to the MSRP
