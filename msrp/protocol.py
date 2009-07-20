@@ -42,6 +42,17 @@ class MSRPHeaderMeta(type):
         except KeyError:
             pass
 
+def _auth_header_quote(name, value, header_name):
+    if name == "qop":
+        if header_name == "WWW-Authenticate":
+            return '"%s"' % value
+        else:
+            return value
+    if name in ("stale", "algorithm", "nc"):
+        return value
+    else:
+        return '"%s"' % value
+
 class MSRPHeader(object):
     __metaclass__ = MSRPHeaderMeta
 
@@ -142,7 +153,7 @@ class DigestHeader(MSRPNamedHeader):
         return param_dict
 
     def _encode(self, decoded):
-        return "Digest " + ", ".join(['%s="%s"' % tup for tup in decoded.iteritems()])
+        return "Digest " + ", ".join(['%s=%s' % (name, _auth_header_quote(name, value, self.name)) for name, value in decoded.iteritems()])
 
 class ToPathHeader(URIHeader):
     name = "To-Path"
@@ -260,7 +271,7 @@ class AuthenticationInfoHeader(MSRPNamedHeader):
         return param_dict
 
     def _encode(self, decoded):
-        return ", ".join(['%s="%s"' % tup for tup in decoded.iteritems()])
+        return ", ".join(['%s=%s' % (name, _auth_header_quote(name, value, self.name)) for name, value in decoded.iteritems()])
 
 class ContentTypeHeader(MSRPNamedHeader):
     name = "Content-Type"
