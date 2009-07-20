@@ -5,20 +5,3 @@ Bugs
  * Resolve exceptions (see node03:/home/ruud/syslog.msrprelay)
 
 
-Minor adjustments
------------------
-
- * Review relay buffer size (currently 1MB)
- * Make backend config reload as well
- * What to do with session expiration?
- * Add an entry to failure_report for the new transaction-id, generally review report generation
- * Review contents of nonce in digest, let peer save nonce state instead of encoding
- * Find better responses for some errors
-
-
-Features
---------
-
- * SIPThor backend
- * Bandwidth limits/throttling
-
