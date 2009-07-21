@@ -493,11 +493,9 @@ class Peer(object):
                     raise ResponseUnintelligible(msrpdata, e.args[0])
             to_path = copy(msrpdata.headers["To-Path"].decoded)
             from_path = copy(msrpdata.headers["From-Path"].decoded)
-            #my_uri = self.domain.generate_uri(self.protocol.transport.getHost())
-            #my_uri.session_id = self.session.session_id
-            #if my_uri != to_path.popleft():
-            #    raise ResponseNoSession(msrpdata, "This message is not directed to me")
-            to_path.popleft()
+            requested_session = to_path.popleft().session_id
+            if requested_session != self.session.session_id:
+                raise ResponseNoSession(msrpdata, "Wrong session id on relay MSRP URI")
             if len(to_path) == 0 and msrpdata.method is not None:
                     raise ResponseNoSession(msrpdata, "Non-response with me as endpoint, nowhere to relay to")
             for index, uri in enumerate(from_path):
