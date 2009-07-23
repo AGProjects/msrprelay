@@ -21,3 +21,22 @@ runtime_directory = "/var/run/msrprelay"
 system_config_directory = "/etc/msrprelay"
 
 configuration_filename = "config.ini"
+
+
+package_requirements = {'python-application': '1.1.4',
+                        'python-gnutls':      '1.1.8'}
+
+try:
+    from application.dependency import ApplicationDependencies, DependencyError
+except ImportError:
+    class DependencyError(Exception): pass
+
+    class ApplicationDependencies(object):
+        def __init__(self, *args, **kw):
+            pass
+        def check(self):
+            required_version = package_requirements['python-application']
+            raise DependencyError("need python-application version %s or higher but it's not installed" % required_version)
+
+dependencies = ApplicationDependencies(**package_requirements)
+

@@ -15,22 +15,6 @@
 #    with this program; if not, write to the Free Software Foundation, Inc.,
 #    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-try:
-    from application.version import Version
-except ImportError:
-    raise ImportError("python-application of version 1.1.2 or higher not found")
-else:
-    from application import __version__ as python_application_version
-    version_needed = Version(1,1,3)
-    if Version.parse(python_application_version) < version_needed:
-        raise ImportError("python-application of version %s needed, found version %s" % (version_needed, python_application_version))
-    del python_application_version, version_needed
-    from gnutls import __version__ as python_gnutls_version
-    version_needed = Version(1,1,5)
-    if Version.parse(python_gnutls_version) < version_needed:
-        raise ImportError("python-gnutls of version %s needed, found version %s" % (version_needed, python_gnutls_version))
-    del python_gnutls_version, version_needed
-
 from copy import copy
 from base64 import b64encode
 from collections import deque
