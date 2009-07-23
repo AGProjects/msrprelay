@@ -492,14 +492,30 @@ class Peer(object):
                     raise ResponseUnintelligible(msrpdata, e.args[0])
             to_path = copy(msrpdata.headers["To-Path"].decoded)
             from_path = copy(msrpdata.headers["From-Path"].decoded)
-            requested_session = to_path.popleft().session_id
-            if requested_session != self.session.session_id:
+            relay_uri = to_path.popleft()
+            if relay_uri.session_id != self.session.session_id:
                 raise ResponseNoSession(msrpdata, "Wrong session id on relay MSRP URI")
-            if len(to_path) == 0 and msrpdata.method is not None:
+            if len(to_path) == 0 and msrpdata.method not in (None, "AUTH"):
                     raise ResponseNoSession(msrpdata, "Non-response with me as endpoint, nowhere to relay to")
             for index, uri in enumerate(from_path):
                 if uri != self.path[index]:
                     raise ResponseNoSession(msrpdata, "From-Path does not match session source")
+            if msrpdata.method == "AUTH":
+                if msrpdata.headers.has_key("Expires"):
+                    expire = msrpdata.headers["Expires"].decoded
+                    if expire < RelayConfig.session_expiration_time_minimum:
+                        raise ResponseOutOfBounds(msrpdata, headers=[MinExpiresHeader(RelayConfig.session_expiration_time_minimum)])
+                    if expire > RelayConfig.session_expiration_time_maximum:
+                        raise ResponseOutOfBounds(msrpdata, headers=[MaxExpiresHeader(RelayConfig.session_expiration_time_maximum)])
+                else:
+                    expire = RelayConfig.session_expiration_time_default
+                use_path = from_path
+                use_path.pop()
+                use_path = list(reversed(use_path))
+                use_path.append(relay_uri)
+                headers = [UsePathHeader(use_path), ExpiresHeader(expire)]
+                self.log(log.debug, "Received refreshing AUTH")
+                raise ResponseOK(msrpdata, headers=headers)
             if self.state == "UNBOUND":
                 if msrpdata.method != "SEND" and (msrpdata.method is None or msrpdata.method == "REPORT" or not RelayConfig.allow_other_methods):
                     raise ResponseNoSession(msrpdata, "Non-forwarding method received on unbound session")
