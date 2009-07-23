@@ -418,8 +418,7 @@ class Peer(object):
                 result = self.relay.backend.retrieve_ha1(username, realm)
                 func = auth_challenger.process_authorization_ha1
             result.addCallback(func, "AUTH", msrpdata.headers["To-Path"].encoded.split()[-1], self.protocol.transport.getPeer().host, **authorization)
-            result.addErrback(self._eb_login_failed, msrpdata)
-            result.addCallback(self._cb_login_success, msrpdata, session_id, username, realm)
+            result.addCallbacks(self._cb_login_success, self._eb_login_failed, callbackArgs=[msrpdata, session_id, username, realm], errbackArgs=[msrpdata])
             return result
 
     def _eb_login_failed(self, failure, msrpdata):
