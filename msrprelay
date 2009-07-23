@@ -7,12 +7,12 @@
 
 
 if __name__ == "__main__":
+    import os
     import sys
+    import signal
     from optparse import OptionParser
     from application.process import process, ProcessError
     from application import log
-    from signal import SIGHUP
-    import os.path
     import msrp
 
     name = "msrprelay"
@@ -61,7 +61,7 @@ if __name__ == "__main__":
             log.err()
         sys.exit(1)
 
-    process.signals.add_handler(SIGHUP, lambda signum, frame: relay.reload())
+    process.signals.add_handler(signal.SIGHUP, lambda signum, frame: relay.reload())
 
     try:
         relay.run()
