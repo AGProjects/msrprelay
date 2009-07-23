@@ -24,7 +24,8 @@ configuration_filename = "config.ini"
 
 
 package_requirements = {'python-application': '1.1.4',
-                        'python-gnutls':      '1.1.8'}
+                        'python-gnutls':      '1.1.8',
+                        'twisted':            '2.5.0'}
 
 try:
     from application.dependency import ApplicationDependencies, DependencyError
