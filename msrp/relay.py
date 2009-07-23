@@ -35,6 +35,8 @@ from copy import copy
 from base64 import b64encode
 from collections import deque
 from os import urandom
+import random
+import string
 
 from application import log
 from application.configuration import *
@@ -732,6 +734,6 @@ class Session(object):
 
     def generate_transaction_id(self):
         while True:
-            transaction_id = b64encode(urandom(18), "+-")
+            transaction_id = random.choice(string.ascii_letters + string.digits) + b64encode(urandom(18), "+-")
             if transaction_id not in self.source.failure_reports and not (self.destination and transaction_id in self.destination.failure_reports):
                 return transaction_id
