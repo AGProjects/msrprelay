@@ -39,7 +39,7 @@ if __name__ == "__main__":
     if system_config_directory != "":
         msrp.system_config_directory = system_config_directory
 
-    process._system_config_directory = msrp.system_config_directory
+    process.system_config_directory = msrp.system_config_directory
     try:
         process.runtime_directory = msrp.runtime_directory
     except ProcessError, e:
