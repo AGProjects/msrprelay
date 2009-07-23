@@ -34,6 +34,7 @@ else:
 from copy import copy
 from base64 import b64encode
 from collections import deque
+from os import urandom
 
 from application import log
 from application.configuration import *
@@ -56,8 +57,6 @@ from msrp.protocol import *
 from msrp.digest import AuthChallenger, LoginFailed
 from msrp.responses import *
 from msrp import configuration_filename
-
-rand_source = open("/dev/urandom")
 
 def load_default_config():
     global RelayConfig
@@ -717,6 +716,6 @@ class Session(object):
 
     def generate_transaction_id(self):
         while True:
-            transaction_id = b64encode(rand_source.read(18), "+-")
+            transaction_id = b64encode(urandom(18), "+-")
             if transaction_id not in self.source.failure_reports and not (self.destination and transaction_id in self.destination.failure_reports):
                 return transaction_id

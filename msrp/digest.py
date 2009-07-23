@@ -18,8 +18,7 @@
 import md5
 from time import time
 from base64 import b64encode, b64decode
-
-rand_source = open("/dev/urandom")
+from os import urandom
 
 class LoginFailed(Exception):
     pass
@@ -53,7 +52,7 @@ def calc_responses(**parameters):
 
 def process_www_authenticate(username, password, method, uri, **parameters):
     nc = "00000001"
-    cnonce = rand_source.read(16).encode("hex")
+    cnonce = urandom(16).encode("hex")
     parameters["username"] = username
     parameters["password"] = password
     parameters["method"] = method
@@ -74,13 +73,13 @@ class AuthChallenger(object):
 
     def __init__(self, expire_time):
         self.expire_time = expire_time
-        self.key = rand_source.read(16)
+        self.key = urandom(16)
 
     def generate_www_authenticate(self, realm, peer_ip):
         www_authenticate = {}
         www_authenticate["realm"] = realm
         www_authenticate["qop"] = "auth"
-        nonce = rand_source.read(16) + "%.3f:%s" % (time(), peer_ip)
+        nonce = urandom(16) + "%.3f:%s" % (time(), peer_ip)
         www_authenticate["nonce"] = b64encode(nonce)
         opaque = md5.new(nonce + self.key)
         www_authenticate["opaque"] = opaque.hexdigest()
