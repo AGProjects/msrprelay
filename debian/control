@@ -3,15 +3,16 @@ Section: net
 Priority: optional
 Maintainer: Ruud Klaver <ruud@ag-projects.com>
 Uploaders: Dan Pascu <dan@ag-projects.com>, Adrian Georgescu <ag@ag-projects.com>
-Build-Depends: cdbs (>= 0.4.49), debhelper (>= 5.0.42), python-all-dev (>= 2.4.4), python-support (>= 0.5.3)
+Build-Depends: cdbs (>= 0.4.49), debhelper (>= 5.0.42), python
+Build-Depends-Indep: python-support
 XS-Python-Version: all
 Standards-Version: 3.8.2
 
 Package: msrprelay
 Architecture: all
-Depends: ${python:Depends}, python-twisted (>= 2.5.0), python-application (>= 1.1.4), python-gnutls (>= 1.1.8), python-sqlobject (>= 0.9.3)
+Depends: ${python:Depends}, python-application (>= 1.1.4), python-gnutls (>= 1.1.8), python-twisted-core (>= 2.5.0), python-twisted-names, python-sqlobject (>= 0.10.2)
 XB-Python-Version: ${python:Versions}
-Description: MSRP Relay, a RFC 4976 compatible IM/File transfer relay 
+Description: MSRP Relay, a RFC 4976 compatible IM/File transfer relay
  This software implements an MSRP relay, which is an extension to the MSRP
  protocol (RFC 4975). Its main role is to help NAT traversal of Interactive
  Messaging and file transfer sessions for SIP/MSRP endpoints located behind
