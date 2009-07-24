@@ -1,17 +1,31 @@
 msrprelay (1.0.2) unstable; urgency=low
 
-  * Added log_level option to configuration file
-  * Improved error messages when TLS certificates are missing or faulty
-  * Do not use ConfigSetting where not necessary
-  * Updated debian requirement for python-application to 1.1.3
-  * Updated required version of python-application to 1.1.3 in INSTALL
-  * Added version check for python-gnutls
-  * Added version check for python-application
+  * Adapted code to work with the latest python-application changes:
+    - use ConfigSetting descriptors instead of _datatypes
+    - replaced startSyslog with start_syslog
+    - use system_config_directory instead of _system_config_directory
+  * Added runtime dependency checks using application.dependency
   * Small fix in forwarding logic
-  * Removed _datatypes class attributes from ConfigSection subclasses
-  * Added INSTALL and README files and synchronize them with the wiki page
+  * Improved error messages when TLS certificates are missing or faulty
+  * Added log_level option to configuration file
+  * Fixed debian building warnings
+  * Update sample config file
+  * Moved tasks to wiki tickets
+  * Fixed parameter quoting in WWW-Authenticate and Authentication-Info header
+  * Added relay session_id check for incoming messages
+  * Use os.urandom instead of reading directly from /dev/urandom
+  * Allow refreshing AUTH from client, nothing is actually refreshed
+  * Fixed the first characted of generated transaction-id to be alphanumeric
+  * Correct callback sequence for authentication Deferred
+  * Updated debian dependencies
+  * Updated dependencies in INSTALL
+  * Removed unused imports
+  * Minimized and updated build and runtime dependencies
+  * Removed obsolete python version specifications in debian control file
+  * Added missing files to source distribution
+  * Fixed lintian warning about missing misc:Depends
 
- -- Adrian Georgescu <ag@ag-projects.com>  Fri, 17 Apr 2009 23:38:59 +0200
+ -- Dan Pascu <dan@ag-projects.com>  Fri, 24 Jul 2009 09:08:48 +0300
 
 msrprelay (1.0.1) unstable; urgency=low
 
