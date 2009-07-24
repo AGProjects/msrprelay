@@ -19,7 +19,6 @@ from sqlobject import sqlhub, connectionForURI, SQLObject, StringCol, BLOBCol
 from sqlobject.dberrors import Error as SQLObjectError
 
 from application.configuration import *
-from application.configuration.datatypes import Boolean
 
 from twisted.internet.threads import deferToThread
 

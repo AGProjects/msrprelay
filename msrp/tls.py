@@ -18,7 +18,6 @@ __all__ = ['Certificate', 'PrivateKey']
 
 from gnutls.crypto import X509Certificate, X509PrivateKey
 
-from application import log
 from application.process import process
 
 class _FileError(Exception): pass

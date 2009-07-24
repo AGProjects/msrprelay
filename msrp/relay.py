@@ -22,7 +22,7 @@ from os import urandom
 
 from application import log
 from application.configuration import *
-from application.configuration.datatypes import NetworkAddress, Boolean, LogLevel
+from application.configuration.datatypes import NetworkAddress, LogLevel
 from application.python.util import Singleton
 from application.system import default_host_ip
 
@@ -34,7 +34,6 @@ from twisted.internet.interfaces import IPullProducer
 
 from gnutls.constants import *
 from gnutls.interfaces.twisted import X509Credentials
-from gnutls.errors import GNUTLSError
 
 from msrp.tls import Certificate, PrivateKey
 from msrp.protocol import *
