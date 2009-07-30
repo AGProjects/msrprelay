@@ -41,28 +41,27 @@ from msrp.digest import AuthChallenger, LoginFailed
 from msrp.responses import *
 from msrp import configuration_filename
 
-def load_default_config():
-    global RelayConfig
-    class RelayConfig(ConfigSection):
-        address = ConfigSetting(type=NetworkAddress, value=NetworkAddress("0.0.0.0:2855"))
-        hostname = ""
-        default_domain = ""
-        allow_other_methods = False
-        session_expiration_time_minimum = 60
-        session_expiration_time_default = 600
-        session_expiration_time_maximum = 3600
-        auth_challenge_expiration_time = 15
-        backend = "database"
-        max_auth_attempts = 3
-        debug_notls = False
-        log_failed_auth = False
-        certificate = ConfigSetting(type=Certificate, value=None)
-        key = ConfigSetting(type=PrivateKey, value=None)
-        log_level = ConfigSetting(type=LogLevel, value=log.level.DEBUG)
 
-load_default_config()
-config = ConfigFile(configuration_filename)
-config.read_settings("Relay", RelayConfig)
+class RelayConfig(ConfigSection):
+    __cfgfile__ = configuration_filename
+    __section__ = 'Relay'
+
+    address = ConfigSetting(type=NetworkAddress, value=NetworkAddress("0.0.0.0:2855"))
+    hostname = ""
+    default_domain = ""
+    allow_other_methods = False
+    session_expiration_time_minimum = 60
+    session_expiration_time_default = 600
+    session_expiration_time_maximum = 3600
+    auth_challenge_expiration_time = 15
+    backend = "database"
+    max_auth_attempts = 3
+    debug_notls = False
+    log_failed_auth = False
+    certificate = ConfigSetting(type=Certificate, value=None)
+    key = ConfigSetting(type=PrivateKey, value=None)
+    log_level = ConfigSetting(type=LogLevel, value=log.level.DEBUG)
+
 
 class Relay(object):
     global config
@@ -111,10 +110,8 @@ class Relay(object):
 
     def reload(self):
         log.debug("Reloading configuration file")
-        load_default_config()
-        del ConfigFile.instances[configuration_filename]
-        config = ConfigFile(configuration_filename)
-        config.read_settings("Relay", RelayConfig)
+        RelayConfig.reset()
+        RelayConfig.read()
         if not self.listener:
             try:
                 self._do_init()

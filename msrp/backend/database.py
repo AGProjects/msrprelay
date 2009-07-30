@@ -26,6 +26,9 @@ from msrp.digest import LoginFailed
 from msrp import configuration_filename
 
 class Config(ConfigSection):
+    __cfgfile__ = configuration_filename
+    __section__ = 'Database'
+
     cleartext_passwords = True
     uri = "mysql://user:pass@db/openser"
     subscriber_table = "subscriber"
@@ -34,8 +37,6 @@ class Config(ConfigSection):
     password_col = "password"
     ha1_col = "ha1"
 
-config = ConfigFile(configuration_filename)
-config.read_settings("Database", Config)
 
 class Subscribers(SQLObject):
     class sqlmeta:

@@ -28,6 +28,9 @@ from msrp import configuration_filename
 import cjson
 
 class Config(ConfigSection):
+    __cfgfile__ = configuration_filename
+    __section__ = 'SIPThor'
+
     cleartext_passwords = True
     uri = "mysql://user:pass@db/sipthor"
     subscriber_table = "sip_accounts"
@@ -35,8 +38,6 @@ class Config(ConfigSection):
     domain_col = "domain"
     profile_col = "profile"
 
-config = ConfigFile(configuration_filename)
-config.read_settings("SIPThor", Config)
 
 class Subscribers(SQLObject):
     class sqlmeta:

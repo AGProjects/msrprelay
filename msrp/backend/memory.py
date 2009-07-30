@@ -24,7 +24,7 @@ from msrp import configuration_filename
 
 config = ConfigFile(configuration_filename)
 config.cleartext_passwords = True
-config.user_db = dict(config.parser.items("Memory"))
+config.user_db = dict(config.get_section("Memory", default=[]))
 
 class Checker(object):
 
