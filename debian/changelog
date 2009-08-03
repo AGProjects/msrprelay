@@ -25,7 +25,7 @@ msrprelay (1.0.2) unstable; urgency=low
   * Added missing files to source distribution
   * Fixed lintian warning about missing misc:Depends
 
- -- Dan Pascu <dan@ag-projects.com>  Fri, 24 Jul 2009 09:08:48 +0300
+ -- Adrian Georgescu <ag@ag-projects.com>  Mon, 03 Aug 2009 21:15:03 +0200
 
 msrprelay (1.0.1) unstable; urgency=low
 
