@@ -3,8 +3,9 @@ msrprelay (1.0.3) unstable; urgency=low
   * Modified code to use the latest facilities from python-application 1.1.5
   * Updated minimum version dependency on python-application
   * Updated list of pruned directories from the source distribution
+  * Restart server after upgrade
 
- -- Adrian Georgescu <ag@ag-projects.com>  Tue, 04 Aug 2009 09:52:19 +0200
+ -- Adrian Georgescu <ag@ag-projects.com>  Tue, 04 Aug 2009 10:09:58 +0200
 
 msrprelay (1.0.2) unstable; urgency=low
 
