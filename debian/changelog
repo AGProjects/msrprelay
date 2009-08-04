@@ -9,6 +9,9 @@ msrprelay (1.0.3) unstable; urgency=low
 msrprelay (1.0.2) unstable; urgency=low
 
   * Adapted code to work with the latest python-application changes:
+    - use ConfigSetting descriptors instead of _datatypes
+    - replaced startSyslog with start_syslog
+    - use system_config_directory instead of _system_config_directory
   * Added runtime dependency checks using application.dependency
   * Small fix in forwarding logic
   * Improved error messages when TLS certificates are missing or faulty
