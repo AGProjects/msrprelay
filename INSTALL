@@ -78,15 +78,15 @@ Configure the server
 A sample configuration file is provided as config.ini.sample. All configuration
 options are documented in this file.
 
-Configure the MSRP Relay by copying config.ini.sample to config.ini and
-editing it. At the very least the certificates need to be provided and the
+Configure MSRPRelay by copying config.ini.sample to config.ini and editing
+it.  At the very least the certificates need to be provided and the
 authentication backend needs to be configured.
 
 Generate a TLS certificate/key pair. For documentation on how to do this,
 see the "tls" directory.
 
 Typically, both TLS certificate/key pair and configuration file would be
-installed in /etc/msrprelay. This is not needed however, as MSRP Relay looks
+installed in /etc/msrprelay. This is not needed however, as MSRPRelay looks
 for the configuration file in its local directory. Alternatively, the
 configuration filename and location may be specified on the command line
 using the --config-file option.

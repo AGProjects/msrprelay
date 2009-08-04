@@ -1,8 +1,8 @@
 
-MSRP Relay
-----------
+MSRPRelay
+---------
 
-Copyright (c) 2007-2008 AG Projects
+Copyright (c) 2007-2009 AG Projects
 http://ag-projects.com
 
 Author: Ruud Klaver
@@ -53,29 +53,29 @@ storage. At the moment, two backends are supported.
   SQLObject. SQLObject supports several database types, including MySQL and
   SQlite. For a complete listing, see the SQLObject documentation. Out of
   the box, the software is designed to work in combinations with the
-  subscriber database used by OpenSER (see http://openser.org).
+  subscriber database used by OpenSIPS (see http://opensips.org).
 * The second backend is an in-memory backend, which can be used for testing
   purposes. Username and password combinations can be specified in the
   configuration file.
 
 Multi-domain operation
 
-This MSRP Relay is designed to operate in a multi-domain setup. The domains
+MSRPRelay is designed to operate in a multi-domain setup. The domains
 relate to the SIP domains served by a SIP Proxy/Registrar (e.g. example.com).
 
-In this setup the MSRP Relay runs on a host that is referenced by a DNS A
-record (load balancing between several MSRP relays can be achieved by having
-this A record refer to more than one IP address). As an example this would be
-"msrprelay.example.com". The MSRP Relay has one TLS certificate/key pair
+In this setup MSRPRelay runs on a host that is referenced by a DNS A record
+(load balancing between several MSRP relays can be achieved by having this A
+record refer to more than one IP address).  As an example this would be
+"msrprelay.example.com".  MSRPRelay has one TLS certificate/key pair
 containing this hostname in the subject alternative name.
 
 For each SIP domain it serves, a DNS SRV record is provisioned. This could be
 for example: "_msrps._tcp.msrprelay.org -> msrprelay.example.com:2855".
 
-The client that wishes to reserve a session at the MSRP Relay active within
-its SIP domain then resolves the SRV record for its domain, connects to the
-relay using TLS and sends an AUTH request with its SIP domain as MSRP URI
-in the To-Path header, like such:" msrps://msrprelay.org;tcp".
+The client that wishes to reserve a session at a MSRPRelay active within its
+SIP domain then resolves the SRV record for its domain, connects to the
+relay using TLS and sends an AUTH request with its SIP domain as MSRP URI in
+the To-Path header, like such:" msrps://msrprelay.org;tcp".
 
 The MSRP relay then uses the host part of this MSRP URI as domain to
 authenticate the user in.
@@ -83,16 +83,17 @@ authenticate the user in.
 To facilitate testing and remove the need to provision SRV records, taking the
 authentication domain from the To-Path MSRP URI can be disabled by manually
 specifying the domain in the configuration file. In this case the
-authenticating client should put the actual hostname of the MSRP Relay into
+authenticating client should put the actual hostname of the MSRPRelay into
 the To-Path MSRP URI of an AUTH request. Note that this implies single domain
 operation.
 
 Session management
 
-The MSRP Relay was specifically designed to support end-to-end congestion
-control for MSRP sessions, in order to support high volume data transfers, such
-as file transfers. For this reason, session sharing between connections cannot
-be used and each TCP/TLS connection supports only one session. 
+The MSRPRelay was specifically designed to support end-to-end congestion
+control for MSRP sessions, in order to support high volume data transfers,
+such as file transfers.  For this reason, session sharing between
+connections cannot be used and each TCP/TLS connection supports only one
+session.
 
 This means that the client will need to open a new connection for each session
 before doing an AUTH. Also the MSRP will initiate every time a new connection
@@ -110,13 +111,13 @@ Free support
 ------------
 
 The project is supported via the wiki collaboration system provided at
+
 http://msrprelay.org
 
 To open ticket please Register first. The ticketing support system is
 available only for registered users. Please beware that the support is
 provided by the community on a best-effort basis.
 
-Commercial support is available by purchasing:
+For commercial support contact AG Projects http://ag-projects.com
 
-Multimedia Service Platform: http://ag-projects.com/Products
 
