@@ -71,12 +71,12 @@ backend = memory
 
 ; The Database backend does username/password retrieval from a database
 ; accessible my SQLObject. By default this is configured to access an
-; OpenSER database. As the table and column names are configurable this
+; OpenSIPS database. As the table and column names are configurable this
 ; could be any database.
 
 ; The URI used to access the database, including username and password. Check
 ; the SQLObject documentation for syntax.
-uri = mysql://user:pass@db/openser
+uri = mysql://user:pass@db/opensips
 
 ; If this option is set the database will be queried for literal passwords.
 ; Otherwise, the "ha1" digest hash will be requested.

@@ -30,7 +30,7 @@ class Config(ConfigSection):
     __section__ = 'Database'
 
     cleartext_passwords = True
-    uri = "mysql://user:pass@db/openser"
+    uri = "mysql://user:pass@db/opensips"
     subscriber_table = "subscriber"
     username_col = "username"
     domain_col = "domain"
