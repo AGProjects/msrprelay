@@ -41,8 +41,8 @@ The software has the following dependencies:
  * Twisted >=2.5.0 http://twistedmatrix.com
  * GnuTLS >=2.4.1 http://www.gnu.org/software/gnutls/
  * python-gnutls >=1.1.8 http://pypi.python.org/pypi/python-gnutls/
- * python-application >=1.1.4 http://pypi.python.org/pypi/python-application
- * SQLObject http://sqlobject.org
+ * python-application >=1.1.5 http://pypi.python.org/pypi/python-application
+ * SQLObject >= 0.10.2 http://sqlobject.org
 
 
 Download and install MSRPRelay
