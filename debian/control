@@ -1,8 +1,8 @@
 Source: msrprelay
 Section: net
 Priority: optional
-Maintainer: Ruud Klaver <ruud@ag-projects.com>
-Uploaders: Dan Pascu <dan@ag-projects.com>, Adrian Georgescu <ag@ag-projects.com>
+Maintainer: Adrian Georgescu <ag@ag-projects.com>
+Uploaders: Dan Pascu <dan@ag-projects.com>, Adrian Georgescu <ag@ag-projects.com>, Luci Stanescu <luci@ag-projects.com>
 Build-Depends: cdbs (>= 0.4.49), debhelper (>= 5.0.42), python
 Build-Depends-Indep: python-support
 Standards-Version: 3.8.2
