@@ -76,7 +76,7 @@ backend = memory
 
 ; The URI used to access the database, including username and password. Check
 ; the SQLObject documentation for syntax.
-uri = mysql://user:pass@db/opensips
+uri = mysql://opensips:opensipsrw@localhost/opensips
 
 ; If this option is set the database will be queried for literal passwords.
 ; Otherwise, the "ha1" digest hash will be requested.
