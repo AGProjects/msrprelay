@@ -3,8 +3,9 @@ msrprelay (1.0.4) unstable; urgency=low
   * Fixed typo in startup script
   * Bumped Standards-Version to 3.9.1
   * Set default credentials for OpenSIPS database in sample config file
+  * Fixed dependency on $remote_fs in init script
 
- -- Adrian Georgescu <ag@ag-projects.com>  Wed, 01 Sep 2010 10:46:28 +0200
+ -- Adrian Georgescu <ag@ag-projects.com>  Wed, 01 Sep 2010 10:52:40 +0200
 
 msrprelay (1.0.3) unstable; urgency=low
 
