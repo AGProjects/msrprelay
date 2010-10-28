@@ -15,29 +15,29 @@
 #    with this program; if not, write to the Free Software Foundation, Inc.,
 #    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-import md5
-from time import time
 from base64 import b64encode, b64decode
+from hashlib import md5
 from os import urandom
+from time import time
 
 class LoginFailed(Exception):
     pass
 
 def calc_ha1(**parameters):
     ha1_text = "%(username)s:%(realm)s:%(password)s" % parameters
-    return md5.new(ha1_text).hexdigest()
+    return md5(ha1_text).hexdigest()
 
 def calc_ha2_response(**parameters):
     ha2_text = "%(method)s:%(uri)s" % parameters
-    return md5.new(ha2_text).hexdigest()
+    return md5(ha2_text).hexdigest()
 
 def calc_ha2_rspauth(**parameters):
     ha2_text = ":%(uri)s" % parameters
-    return md5.new(ha2_text).hexdigest()
+    return md5(ha2_text).hexdigest()
 
 def calc_hash(**parameters):
     hash_text = "%(ha1)s:%(nonce)s:%(nc)s:%(cnonce)s:auth:%(ha2)s" % parameters
-    return md5.new(hash_text).hexdigest()
+    return md5(hash_text).hexdigest()
 
 def calc_responses(**parameters):
     if parameters.has_key("ha1"):
@@ -81,7 +81,7 @@ class AuthChallenger(object):
         www_authenticate["qop"] = "auth"
         nonce = urandom(16) + "%.3f:%s" % (time(), peer_ip)
         www_authenticate["nonce"] = b64encode(nonce)
-        opaque = md5.new(nonce + self.key)
+        opaque = md5(nonce + self.key)
         www_authenticate["opaque"] = opaque.hexdigest()
         return www_authenticate
 
@@ -109,7 +109,7 @@ class AuthChallenger(object):
             raise LoginFailed("Could not decode nonce")
         if nonce_ip != peer_ip:
             raise LoginFailed("This challenge was not issued to you")
-        expected_opaque = md5.new(nonce_dec + self.key).hexdigest()
+        expected_opaque = md5(nonce_dec + self.key).hexdigest()
         if opaque != expected_opaque:
             raise LoginFailed("This nonce/opaque combination was not issued by me")
         if issued + self.expire_time < time():
