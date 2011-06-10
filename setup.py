@@ -1,10 +1,19 @@
 #!/usr/bin/env python
 
+import os
+import re
+
 from distutils.core import setup
-from msrp import __version__
+
+
+def get_version():
+    return re.search(r"""__version__\s+=\s+(?P<quote>['"])(?P<version>.+?)(?P=quote)""", open('msrp/__init__.py').read()).group('version')
+
+def find_packages(toplevel):
+    return [directory.replace(os.path.sep, '.') for directory, subdirs, files in os.walk(toplevel) if '__init__.py' in files]
 
 setup(name             = "msrprelay",
-      version          = __version__,
+      version          = get_version(),
       author           = "Ruud Klaver",
       author_email     = "ruud@ag-projects.com",
       maintainer       = "Ruud Klaver",
@@ -19,6 +28,6 @@ setup(name             = "msrprelay",
         "Operating System :: OS Independent",
         "Programming Language :: Python",
       ],
-      packages         = ['msrp', 'msrp.backend'],
+      packages         = find_packages('msrp'),
       scripts          = ['msrprelay']
       )
