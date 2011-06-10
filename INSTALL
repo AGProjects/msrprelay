@@ -6,7 +6,7 @@ For Debian testing or unstable there is an official public repository
 provided by AG Projects. Install the AG Projects debian software signing
 key:
 
-wget http://download.ag-projects.com/agp-debian-gpg.key 
+wget http://download.ag-projects.com/agp-debian-gpg.key
 apt-key add agp-debian-gpg.key
 
 Add these lines in etc/apt/sources.list
@@ -33,15 +33,15 @@ Download and install dependencies
 ---------------------------------
 
 The software has been developed and tested on Linux Debian unstable
-distribution. 
+distribution.
 
 The software has the following dependencies:
 
- * Python >=2.4 http://python.org 
+ * Python >=2.5 http://python.org
  * Twisted >=2.5.0 http://twistedmatrix.com
  * GnuTLS >=2.4.1 http://www.gnu.org/software/gnutls/
  * python-gnutls >=1.1.8 http://pypi.python.org/pypi/python-gnutls/
- * python-application >=1.1.5 http://pypi.python.org/pypi/python-application
+ * python-application >=1.2.8 http://pypi.python.org/pypi/python-application
  * SQLObject >= 0.10.2 http://sqlobject.org
 
 
@@ -119,9 +119,9 @@ Running the server
 
 Start the MSRPRelay, either by executing:
 
-./msrprelay --no-fork 
+./msrprelay --no-fork
 
-or as a daemon, which is the default behaviour. 
+or as a daemon, which is the default behaviour.
 
 This can also be done using the init.d script:
 
