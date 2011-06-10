@@ -1,3 +1,10 @@
+msrprelay (1.0.6) unstable; urgency=low
+
+  * Adapted to latest changes in python-application
+  * Reworked Debian packaging
+
+ -- Saul Ibarra <saul@ag-projects.com>  Fri, 10 Jun 2011 09:44:56 +0200
+
 msrprelay (1.0.5) unstable; urgency=low
 
   * Use hexdigest.md5 istead of md5

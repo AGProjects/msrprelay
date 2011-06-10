@@ -1,3 +1,25 @@
+msrprelay (1.0.6) unstable; urgency=low
+
+  * Adapted to latest changes in python-application
+  * Reworked Debian packaging
+
+ -- Saul Ibarra <saul@ag-projects.com>  Fri, 10 Jun 2011 09:44:56 +0200
+
+msrprelay (1.0.5) unstable; urgency=low
+
+  * Use hexdigest.md5 istead of md5
+
+ -- Adrian Georgescu <ag@ag-projects.com>  Thu, 28 Oct 2010 20:26:45 +0200
+
+msrprelay (1.0.4) unstable; urgency=low
+
+  * Fixed typo in startup script
+  * Bumped Standards-Version to 3.9.1
+  * Set default credentials for OpenSIPS database in sample config file
+  * Fixed dependency on $remote_fs in init script
+
+ -- Adrian Georgescu <ag@ag-projects.com>  Wed, 01 Sep 2010 10:52:40 +0200
+
 msrprelay (1.0.3) unstable; urgency=low
 
   * Modified code to use the latest facilities from python-application 1.1.5
