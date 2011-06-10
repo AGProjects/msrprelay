@@ -23,8 +23,8 @@ from os import urandom
 from application import log
 from application.configuration import *
 from application.configuration.datatypes import NetworkAddress, LogLevel
-from application.python.util import Singleton
-from application.system import default_host_ip
+from application.python.types import Singleton
+from application.system import host
 
 from zope.interface import implements
 from twisted.internet.defer import maybeDeferred
@@ -95,7 +95,7 @@ class Relay(object):
         elif RelayConfig.address[0] != "0.0.0.0":
             self.hostname = RelayConfig.address[0]
         else:
-            self.hostname = default_host_ip
+            self.hostname = host.default_ip
         self.auth_challenger = AuthChallenger(RelayConfig.auth_challenge_expiration_time)
 
     def _do_run(self):
