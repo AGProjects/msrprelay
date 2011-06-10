@@ -23,7 +23,7 @@ system_config_directory = "/etc/msrprelay"
 configuration_filename = "config.ini"
 
 
-package_requirements = {'python-application': '1.1.5',
+package_requirements = {'python-application': '1.2.8',
                         'python-gnutls':      '1.1.8',
                         'twisted':            '2.5.0'}
 
