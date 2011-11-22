@@ -2,7 +2,7 @@
 MSRPRelay
 ---------
 
-Copyright (c) 2007-2009 AG Projects
+Copyright (c) 2007-2011 AG Projects
 http://ag-projects.com
 
 Author: Ruud Klaver
@@ -13,12 +13,13 @@ Home page: http://msrprelay.org
 Description
 -----------
 
-This software implements an MSRP relay, which is an extension to the MSRP
-protocol. Its main role is to help NAT traversal of Interactive Messaging and
-file transfer sessions for SIP/MSRP endpoints located behind NAT.
+This software implements the MSRP relay specified by RFC 4976, Relay
+Extensions for the Message Session Relay Protocol (MSRP).  Its main role is
+to help NAT traversal of Interactive Messaging and File Transfer sessions
+for SIP/MSRP endpoints located behind NAT.
 
 The software is licensed according to the GNU General Public License version
-2. See LICENSE file for more details.
+2.  See LICENSE file for more details.
 
 
 Background
@@ -58,10 +59,11 @@ storage. At the moment, two backends are supported.
   purposes. Username and password combinations can be specified in the
   configuration file.
 
+
 Multi-domain operation
 
-MSRPRelay is designed to operate in a multi-domain setup. The domains
-relate to the SIP domains served by a SIP Proxy/Registrar (e.g. example.com).
+MSRPRelay is designed to operate in a multi-domain setup. The domains relate
+to the SIP domains served by a SIP Proxy/Registrar (e.g.  example.com).
 
 In this setup MSRPRelay runs on a host that is referenced by a DNS A record
 (load balancing between several MSRP relays can be achieved by having this A
@@ -86,6 +88,18 @@ specifying the domain in the configuration file. In this case the
 authenticating client should put the actual hostname of the MSRPRelay into
 the To-Path MSRP URI of an AUTH request. Note that this implies single domain
 operation.
+
+Multiple relays per domain
+
+For allowing multiple relays for each domain you must either:
+
+1. Create multiple SRV DNS records pointing to multiple hostnames or
+
+2. Create one SRV record that point to one hostname and add multiple A
+   records for that hostname pointing to multiple IP addesses.  When doing
+   so it is important that each relay is configured with a hostname that is
+   resolvable in the DNS to his own IP address.
+
 
 Session management
 
@@ -120,4 +134,11 @@ To request support you must use the mailing list available at
 http://lists.ag-projects.com/mailman/listinfo/sipbeyondvoip
 
 For commercial support contact AG Projects http://ag-projects.com
+
+
+Credits
+-------
+
+The development of MSRP relay has been sponsored by  NLnet foundation
+http://nlnet.nl
 

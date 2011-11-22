@@ -137,5 +137,6 @@ The "test/" directory contains a number of test scripts and a simple file
 transfer sender and receiver. See the README in the "test/" directory for
 documentation on the latter.
 
-You can download an MSRP client from http://SipSimpleClient.com
+You can use Blink client for IM and file Transfer from http://icanblink.com
+or comand line tools from SIP Simple Client SDK http://sipsimpleclient.com.
 
