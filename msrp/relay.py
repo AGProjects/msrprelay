@@ -88,8 +88,14 @@ class Relay(object):
             self.credentials.verify_peer = False
         if RelayConfig.hostname != "":
             self.hostname = RelayConfig.hostname
-            if not RelayConfig.debug_notls and self.hostname not in RelayConfig.certificate.alternative_names.dns:
-                raise RuntimeError('The specified MSRP Relay hostname "%s" is not set as DNS subject alternative name in the TLS certificate.' % self.hostname)
+            if not RelayConfig.debug_notls:
+                def matches(hostname, pattern):
+                    if pattern.startswith('*.'):
+                        return hostname.endswith(pattern[1:])
+                    else:
+                        return hostname == pattern
+                if not any(matches(self.hostname, name) for name in RelayConfig.certificate.alternative_names.dns):
+                    raise RuntimeError('The specified MSRP Relay hostname "%s" is not set as DNS subject alternative name in the TLS certificate.' % self.hostname)
         elif not RelayConfig.debug_notls:
             self.hostname = RelayConfig.certificate.alternative_names.dns[0] # Just grab the first one?
         elif RelayConfig.address[0] != "0.0.0.0":
