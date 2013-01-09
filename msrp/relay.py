@@ -354,7 +354,7 @@ class Peer(object):
         from_path = msrpdata.headers["From-Path"].decoded
         if msrpdata.method == "AUTH" and len(to_path) == 1:
             return self._handle_auth(msrpdata)
-        elif (msrpdata.method == "SEND" or (msrpdata.method is not None and msrpdata.method != "REPORT" and RelayConfig.allow_other_methods)) and len(to_path) > 1:
+        elif (msrpdata.method in ("SEND", "NICKNAME)" or (msrpdata.method is not None and msrpdata.method != "REPORT" and RelayConfig.allow_other_methods)) and len(to_path) > 1:
             session_id = to_path[0].session_id
             try:
                 session = self.relay.unbound_sessions[session_id]
@@ -501,7 +501,7 @@ class Peer(object):
                 self.log(log.debug, "Received refreshing AUTH")
                 raise ResponseOK(msrpdata, headers=headers)
             if self.state == "UNBOUND":
-                if msrpdata.method != "SEND" and (msrpdata.method is None or msrpdata.method == "REPORT" or not RelayConfig.allow_other_methods):
+                if msrpdata.method not in ("SEND", "NICKNAME") and (msrpdata.method is None or msrpdata.method == "REPORT" or not RelayConfig.allow_other_methods):
                     raise ResponseNoSession(msrpdata, "Non-forwarding method received on unbound session")
                 self.got_destination(Peer(path = to_path, session = self.session, other_peer = self))
                 uri = to_path[0]
@@ -532,7 +532,7 @@ class Peer(object):
                 if orig_data is not None and msrpdata.code != ResponseOK.code:
                     report = generate_report(msrpdata.code, orig_data.msrpdata_received, self.session.generate_transaction_id(), orig_data.bytes_received, msrpdata.comment)
                     self.other_peer.enqueue(report)
-            elif msrpdata.method == "SEND" or msrpdata.method == "REPORT" or RelayConfig.allow_other_methods:
+            elif msrpdata.method in ("SEND", "REPORT", "NICKNAME") or RelayConfig.allow_other_methods:
                 # Do the magic of appending the first To-Path URI to the From-Path.
                 to_path = copy(msrpdata.headers["To-Path"].decoded)
                 from_path = copy(msrpdata.headers["From-Path"].decoded)
