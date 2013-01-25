@@ -1,3 +1,10 @@
+msrprelay (1.0.8) unstable; urgency=low
+
+  * Added SIPThor integration
+  * Allow NICKNAME as valid MSRP method
+
+ -- Saul Ibarra <saul@ag-projects.com>  Fri, 25 Jan 2013 15:57:53 +0100
+
 msrprelay (1.0.7) unstable; urgency=low
 
   * Fixed matching of DNS names that contain wildcards in X509 certificates
