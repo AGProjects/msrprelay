@@ -16,9 +16,7 @@
 #    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from copy import copy
-from base64 import b64encode
 from collections import deque
-from os import urandom
 
 from application import log
 from application.configuration import *
@@ -136,6 +134,7 @@ class Relay(object):
     def generate_uri(self):
         return URI("%s" % self.hostname, port = RelayConfig.address[1], use_tls = not RelayConfig.debug_notls)
 
+
 class RelayFactory(Factory):
     protocol = MSRPProtocol
     noisy = False
@@ -143,6 +142,7 @@ class RelayFactory(Factory):
     def get_peer(self, protocol):
         peer = Peer(protocol = protocol)
         return peer
+
 
 class ConnectingFactory(ClientFactory):
     protocol = MSRPProtocol
@@ -158,8 +158,8 @@ class ConnectingFactory(ClientFactory):
     def clientConnectionFailed(self, connector, reason):
         self.peer.connection_failed(reason.value)
 
-class ForwardingData(object):
 
+class ForwardingData(object):
     def __init__(self, msrpdata):
         self.msrpdata_received = msrpdata
         self.msrpdata_forward = None
@@ -169,6 +169,14 @@ class ForwardingData(object):
 
     def __str__(self):
         return str(self.msrpdata_received)
+
+    @property
+    def method(self):
+        return self.msrpdata_received.method
+
+    @property
+    def bytes_in_queue(self):
+        return sum(len(data) for data in self.data_queue)
 
     def add_data(self, data):
         self.bytes_received += len(data)
@@ -180,12 +188,15 @@ class ForwardingData(object):
         else:
             return None
 
-    @property
-    def bytes_in_queue(self):
-        return sum(len(data) for data in self.data_queue)
+
+class ForwardingSendData(ForwardingData):
+    def __init__(self, msrpdata):
+        super(ForwardingSendData, self).__init__(msrpdata)
+        self.position = msrpdata.headers["Byte-Range"].decoded[0]
+
 
 # A session always exists of two peer instances that are associated with
-# eachother. 
+# eachother.
 #
 # A Peer instance has an attribute state, which can be one of the following:
 #
@@ -251,14 +262,15 @@ class Peer(object):
         else:
             self.invalid_timer = None
             self.state = "CONNECTING"
-        self.failure_reports = {}
-        self.receiving = None
+        self.send_transactions = {}
+        self.other_transactions = {}  # Other requests not REPORT or SEND
+        self.forwarding_data = None
         # transmission attributes
         self.registered = False
-        self.sending_data = False
-        self.hp_queue = deque()
-        self.lp_queue = deque()
-        self.quenched = False
+        self.forwarding_send_request = False
+        self.forward_send_queue = deque()
+        self.forward_other_queue = deque()
+        self.read_paused = False
         self.relay = Relay()
 
     def __str__(self):
@@ -283,26 +295,37 @@ class Peer(object):
 
     def write_chunk(self, chunk):
         #self.log(log.debug, "Received %d bytes of MSRP body" % len(chunk))
-        if self.state == "ESTABLISHED" and self.receiving:
-            self.receiving.add_data(chunk)
-            self.other_peer._quench_check()
+        if self.state == "ESTABLISHED" and self.forwarding_data:
+            self.forwarding_data.add_data(chunk)
+            if self.forwarding_data.method != 'SEND' and self.forwarding_data.bytes_in_queue > 10240:
+                self.log(log.debug, "Non-SEND request's payload bigger than 10KB, closing connection")
+                del self.other_transactions[self.forwarding_data.msrpdata_forward.transaction_id]
+                self.forwarding_data = None
+                self.protocol.transport.loseConnection()
+                return
+            self.other_peer._maybe_pause_read()
             self.other_peer.start_sending()
 
     def data_end(self, continuation):
         #self.log(log.debug, "Received termination \"%s\"" % continuation)
-        if self.state == "ESTABLISHED" and self.receiving:
-            msrpdata = self.receiving.msrpdata_received
+        if self.state == "ESTABLISHED" and self.forwarding_data:
+            msrpdata = self.forwarding_data.msrpdata_received
             if msrpdata.method == "SEND":
                 if msrpdata.failure_report != "no":
                     if msrpdata.failure_report == "yes":
-                        self.enqueue(ResponseOK(msrpdata).data)
-                        timer = reactor.callLater(30, self._cb_send_timeout_report, self.receiving, self.receiving.msrpdata_forward.transaction_id)
-                    else:
-                        timer = None
-                    self.failure_reports[self.receiving.msrpdata_forward.transaction_id] = (self.receiving, timer)
-            self.receiving.continuation = continuation
+                        self.enqueue(ResponseOK(msrpdata).data.encode())
+                    self.send_transactions[self.forwarding_data.msrpdata_forward.transaction_id] = (self.forwarding_data, None)
+                self.forwarding_data.continuation = continuation
+            else:
+                if msrpdata.method != 'REPORT' and msrpdata.failure_report != 'no':
+                    # Keep track, for matching replies
+                    timer = reactor.callLater(30, self._cb_transaction_timeout, self.forwarding_data)
+                    self.other_transactions[self.forwarding_data.msrpdata_forward.transaction_id] = (self.forwarding_data, timer)
+                # For methods other than SEND, assemble the chunk and don't use ForwardingData
+                self.forwarding_data.msrpdata_forward.data = ''.join(self.forwarding_data.data_queue)
+                self.other_peer.enqueue(self.forwarding_data.msrpdata_forward.encode(continuation))
             self.other_peer.start_sending()
-            self.receiving = None
+            self.forwarding_data = None
 
     def connection_lost(self, reason):
         self.log(log.debug, "Connection lost: %s" % reason)
@@ -316,6 +339,7 @@ class Peer(object):
         self.state = "DISCONNECTED"
         if self.session is not None and self is self.session.source:
             self.log(log.debug, "bytes sent: %d, bytes received: %d" % (self.session.upstream_bytes, self.session.downstream_bytes))
+        self._cleanup()
 
     # called by ConnectingFactory
 
@@ -323,6 +347,7 @@ class Peer(object):
         self.log(log.warn, "Connection failed: %s" % reason)
         if self.state == "CONNECTING":
             self.other_peer.disconnect()
+        self._cleanup()
 
     # methods for an unbound peer
 
@@ -338,7 +363,7 @@ class Peer(object):
             return
         response = failure.value.data
         #self.log(log.debug, "Sending response %03d (%s)" % (response.code, response.comment))
-        self.enqueue(response)
+        self.enqueue(response.encode())
 
     def _unbound_peer_data(self, msrpdata):
         try:
@@ -354,7 +379,7 @@ class Peer(object):
         from_path = msrpdata.headers["From-Path"].decoded
         if msrpdata.method == "AUTH" and len(to_path) == 1:
             return self._handle_auth(msrpdata)
-        elif (msrpdata.method == "SEND" or (msrpdata.method is not None and msrpdata.method != "REPORT" and RelayConfig.allow_other_methods)) and len(to_path) > 1:
+        elif msrpdata.method == "SEND" and len(to_path) > 1:
             session_id = to_path[0].session_id
             try:
                 session = self.relay.unbound_sessions[session_id]
@@ -368,7 +393,6 @@ class Peer(object):
             self.path = from_path
             self.other_peer = self.session.source
             self.other_peer.got_destination(self)
-            self.receiving = ForwardingData(msrpdata)
             self._bound_peer_data(msrpdata)
         else:
             raise ResponseUnknownMethod(msrpdata)
@@ -453,7 +477,7 @@ class Peer(object):
         self.log(log.debug, "Successfully connected")
         self.state = "ESTABLISHED"
         self.protocol = protocol
-        if self.hp_queue or self.lp_queue:
+        if self.forward_other_queue or self.forward_send_queue:
             self.start_sending()
 
     def got_destination(self, other_peer):
@@ -501,8 +525,8 @@ class Peer(object):
                 self.log(log.debug, "Received refreshing AUTH")
                 raise ResponseOK(msrpdata, headers=headers)
             if self.state == "UNBOUND":
-                if msrpdata.method != "SEND" and (msrpdata.method is None or msrpdata.method == "REPORT" or not RelayConfig.allow_other_methods):
-                    raise ResponseNoSession(msrpdata, "Non-forwarding method received on unbound session")
+                if msrpdata.method != "SEND":
+                    raise ResponseNoSession(msrpdata, "Non-SEND method received on unbound session")
                 self.got_destination(Peer(path = to_path, session = self.session, other_peer = self))
                 uri = to_path[0]
                 #self.log(log.debug, "Attempting to connect to %s" % str(uri))
@@ -515,39 +539,57 @@ class Peer(object):
                 for index, uri in enumerate(to_path):
                     if uri != self.other_peer.path[index]:
                         raise ResponseNoSession(msrpdata, "To-Path does not match session destination")
-            if msrpdata.method == "SEND" and not msrpdata.headers.has_key("Message-ID"):
-                raise ResponseUnintelligible(msrpdata, "SEND received without Message-ID")
-            if msrpdata.method == "SEND" and not msrpdata.headers.has_key("Byte-Range"):
-                raise ResponseUnintelligible(msrpdata, "SEND received without Byte-Range")
-            if msrpdata.method is None: # we got a response
-                try:
-                    orig_data, timer = self.other_peer.failure_reports.pop(msrpdata.transaction_id)
-                except KeyError:
-                    if self.other_peer.receiving and msrpdata.transaction_id == self.other_peer.receiving.msrpdata_forward.transaction_id and self.other_peer.receiving.msrpdata_forward.failure_report != "no":
-                        orig_data, timer = self.other_peer.receiving.msrpdata_received, None
-                    else:
-                        orig_data, timer = None, None
-                if timer is not None:
-                    timer.cancel()
-                if orig_data is not None and msrpdata.code != ResponseOK.code:
-                    report = generate_report(msrpdata.code, orig_data.msrpdata_received, self.session.generate_transaction_id(), orig_data.bytes_received, msrpdata.comment)
-                    self.other_peer.enqueue(report)
+            if msrpdata.method == "SEND":
+                if not msrpdata.headers.has_key("Message-ID"):
+                    raise ResponseUnintelligible(msrpdata, "SEND received without Message-ID")
+                if not msrpdata.headers.has_key("Byte-Range"):
+                    raise ResponseUnintelligible(msrpdata, "SEND received without Byte-Range")
+            if msrpdata.method is None:    # we got a response
+                if msrpdata.transaction_id in self.other_peer.send_transactions:
+                    # Handle response to SEND request with Failure-Report != no
+                    forwarding_data, timer = self.other_peer.send_transactions.pop(msrpdata.transaction_id)
+                    if timer is not None:
+                        timer.cancel()
+                    if msrpdata.code != ResponseOK.code:
+                        report = generate_report(msrpdata.code, forwarding_data, reason=msrpdata.comment)
+                        self.other_peer.enqueue(report.encode())
+                elif msrpdata.transaction_id in self.other_peer.other_transactions:
+                    forwarding_data, timer = self.other_peer.other_transactions.pop(msrpdata.transaction_id)
+                    if timer is not None:
+                        timer.cancel()
+                    forward = msrpdata
+                    forward.transaction_id = forwarding_data.msrpdata_received.transaction_id
+                    to_path_header = msrpdata.headers["To-Path"]
+                    to_path = to_path_header.decoded
+                    from_path_header = msrpdata.headers["From-Path"]
+                    from_path = from_path_header.decoded
+                    from_path.appendleft(to_path.popleft())
+                    to_path_header.decoded = to_path
+                    from_path_header.decoded = from_path
+                    self.other_peer.enqueue(forward.encode())
+                else:
+                    self.log(log.debug, "Received response for untracked request: %s" % msrpdata)
             elif msrpdata.method in ("SEND", "REPORT", "NICKNAME") or RelayConfig.allow_other_methods:
                 # Do the magic of appending the first To-Path URI to the From-Path.
                 to_path = copy(msrpdata.headers["To-Path"].decoded)
                 from_path = copy(msrpdata.headers["From-Path"].decoded)
                 from_path.appendleft(to_path.popleft())
-                forward = MSRPData(self.session.generate_transaction_id(), method = msrpdata.method)
+                forward = MSRPData(generate_transaction_id(), method=msrpdata.method)
                 for header in msrpdata.headers.itervalues():
                     forward.add_header(MSRPHeader(header.name, header.encoded))
                 forward.add_header(ToPathHeader(to_path))
                 forward.add_header(FromPathHeader(from_path))
-                if forward.method == "REPORT":
-                    self.other_peer.enqueue(forward)
+                if msrpdata.method == 'SEND':
+                    self.forwarding_data = ForwardingSendData(msrpdata)
                 else:
-                    self.receiving = ForwardingData(msrpdata)
-                    self.receiving.msrpdata_forward = forward
-                    self.other_peer.enqueue(self.receiving)
+                    self.forwarding_data = ForwardingData(msrpdata)
+                self.forwarding_data.msrpdata_forward = forward
+                if self.forwarding_data.method == 'SEND':
+                    if msrpdata.failure_report != "no":
+                        self.send_transactions[self.forwarding_data.msrpdata_forward.transaction_id] = (self.forwarding_data, None)
+                    self.other_peer.enqueue(self.forwarding_data)
+                else:
+                    self.other_transactions[self.forwarding_data.msrpdata_forward.transaction_id] = (self.forwarding_data, None)
             else:
                 raise ResponseUnknownMethod(msrpdata)
         except ResponseException, e:
@@ -555,21 +597,26 @@ class Peer(object):
                 self.log(log.debug, "Caught exception to response: %s (%s)" % (e.__class__.__name__, e.data.comment))
                 return
             response = e.data
-            self.enqueue(response)
+            self.enqueue(response.encode())
 
-    def _cb_send_timeout_report(self, data, transaction_id):
-        #self.log(log.debug, "Timeout for %s" % str(data))
-        del self.failure_reports[data.msrpdata_forward.transaction_id]
-        report = generate_report(ResponseDownstreamTimeout.code, data.msrpdata_received, self.session.generate_transaction_id(), data.bytes_received)
-        self.enqueue(report)
+    def _cb_transaction_timeout(self, forward_data):
+        transaction_id = forward_data.msrpdata_forward.transaction_id
+        if forward_data.method == 'SEND':
+            del self.send_transactions[transaction_id]
+            if forward_data.msrpdata_received.failure_report == 'yes':
+                report = generate_report(ResponseDownstreamTimeout.code, forward_data)
+                self.enqueue(report.encode())
+        else:
+            # We don't really need to do anything here, just remove the request from the mapping
+            del self.other_transactions[transaction_id]
 
     def enqueue(self, msrpdata):
         #self.log(log.debug, "Enqueuing %s" % str(msrpdata))
-        if isinstance(msrpdata, MSRPData):
-            self.hp_queue.append(msrpdata)
-        else:
-            self.lp_queue.append(msrpdata)
-        self._quench_check()
+        if isinstance(msrpdata, ForwardingData):
+            self.forward_send_queue.append(msrpdata)
+        else:    # a string containing a request or response
+            self.forward_other_queue.append(msrpdata)
+        self._maybe_pause_read()
         self.start_sending()
 
     def start_sending(self):
@@ -602,92 +649,124 @@ class Peer(object):
             self.connector.disconnect()
             self.state = "DISCONNECTED"
         elif self.state == "ESTABLISHED":
-            if self.receiving and self.receiving.msrpdata_received.failure_report != "no":
-                report = generate_report(ResponseDownstreamTimeout.code, self.receiving.msrpdata_received, self.session.generate_transaction_id(), self.receiving.bytes_received, "Session got disconnected")
-                self.enqueue(report)
-            for orig_data, timer in self.failure_reports.itervalues():
+            for forwarding_data, timer in self.send_transactions.itervalues():
                 if timer is not None:
                     timer.cancel()
-                report = generate_report(ResponseDownstreamTimeout.code, orig_data.msrpdata_received, self.session.generate_transaction_id(), orig_data.bytes_received, "Session got disconnected")
-                self.enqueue(report)
+                report = generate_report(ResponseDownstreamTimeout.code, forwarding_data, reason="Session got disconnected")
+                self.enqueue(report.encode())
+            self.send_transactions.clear()
+            for _, timer in self.other_transactions.itervalues():
+                if timer is not None:
+                    timer.cancel()
+            self.other_transactions.clear()
             if not self.registered:
                 self.protocol.transport.loseConnection()
                 self.state = "DISCONNECTED"
             else:
                 self.state = "DISCONNECTING"
 
+    def _cleanup(self):
+        self.session = None
+        self.other_peer = None
+        self.protocol = None
+        self.relay = None
+        for _, timer in self.send_transactions.itervalues():
+            if timer is not None and timer.active():
+                timer.cancel()
+        self.send_transactions.clear()
+        for _, timer in self.other_transactions.itervalues():
+            if timer is not None and timer.active():
+                timer.cancel()
+        self.other_transactions.clear()
+        self.forward_send_queue.clear()
+        self.forward_other_queue.clear()
+
     @property
     def _data_bytes(self):
-        return sum(data.bytes_in_queue for data in self.lp_queue)
+        return sum(data.bytes_in_queue for data in self.forward_send_queue)
 
     @property
     def _message_count(self):
-        return len(self.hp_queue) + len(self.lp_queue)
+        return len(self.forward_other_queue) + len(self.forward_send_queue)
 
-    def _quench_check(self):
-        if self.state == "ESTABLISHED" and self.other_peer.state == "ESTABLISHED" and not self.other_peer.quenched:
+    def _maybe_pause_read(self):
+        if self.state == "ESTABLISHED" and self.other_peer.state == "ESTABLISHED" and not self.other_peer.read_paused:
             if self._data_bytes > 1024 * 1024 or self._message_count > 50:
-                self.other_peer.quench()
+                self.other_peer.pause_read()
 
-    def _unquench_check(self):
-        if self.state == "ESTABLISHED" and self.other_peer.state == "ESTABLISHED" and self.other_peer.quenched:
+    def _maybe_resume_read(self):
+        if self.state == "ESTABLISHED" and self.other_peer.state == "ESTABLISHED" and self.other_peer.read_paused:
             if self._data_bytes <= 1024 * 1024 and self._message_count <= 50:
-                self.other_peer.unquench()
+                self.other_peer.resume_read()
 
-    def quench(self):
-        #self.log(log.debug, "Quenching")
-        self.quenched = True
+    def pause_read(self):
+        self.read_paused = True
         self.protocol.transport.stopReading()
 
-    def unquench(self):
-        #self.log(log.debug, "Unquenching")
-        self.quenched = False
+    def resume_read(self):
+        self.read_paused = False
         self.protocol.transport.startReading()
 
     # methods implemented for IPullProducer
 
     def resumeProducing(self):
-        if self.hp_queue:
-            if self.sending_data:
-                #self.log(log.debug, "Sending high priorty message, aborting SEND")
-                data = self.lp_queue[0]
-                self.protocol.transport.write(data.msrpdata_forward.encode_end("+"))
-                data.msrpdata_forward.transaction_id = self.session.generate_transaction_id()
-                # TODO: add an entry to failure_report for the new transaction-id
-                byterange = data.msrpdata_forward.headers["Byte-Range"].decoded
-                byterange[0] = data.pos
-                data.msrpdata_forward.headers["Byte-Range"].decoded = byterange
-                self.sending_data = False
+        if self.forward_other_queue:
+            if self.forwarding_send_request:
+                #self.log(log.debug, "Sending other message, aborting SEND")
+                data = self.forward_send_queue.popleft()
+                # terminate the current chunk
+                self._send_payload(data.msrpdata_forward.encode_end("+"))
+                timer = reactor.callLater(30, self.other_peer._cb_transaction_timeout, data)
+                self.other_peer.send_transactions[data.msrpdata_forward.transaction_id] = (data, timer)
+                if self.other_peer.forwarding_data is data:
+                    self.other_peer.forwarding_data = None
+                # clone the forward data
+                new_data = ForwardingSendData(data.msrpdata_received)
+                new_data.continuation = data.continuation
+                new_data.position = data.position
+                new_data.data_queue, data.data_queue = data.data_queue, deque()
+                new_data.msrpdata_forward = data.msrpdata_forward.clone()
+                # adjust the byterange, create a new transaction
+                new_data.msrpdata_forward.transaction_id = generate_transaction_id()
+                byterange = new_data.msrpdata_forward.headers["Byte-Range"].decoded
+                byterange[0] = new_data.position
+                new_data.msrpdata_forward.headers["Byte-Range"].decoded = byterange
+                self.forward_send_queue.appendleft(new_data)
+                if self.other_peer.forwarding_data is None and new_data.continuation is None:
+                    self.other_peer.forwarding_data = new_data
+                self.forwarding_send_request = False
             else:
-                #self.log(log.debug, "Sending high priority message")
-                self.protocol.transport.write(self.hp_queue.popleft().encode())
-            self._unquench_check()
-        elif self.sending_data:
-            data = self.lp_queue[0]
+                #self.log(log.debug, "Sending message")
+                self._send_payload(self.forward_other_queue.popleft())
+            self._maybe_resume_read()
+        elif self.forwarding_send_request:
+            data = self.forward_send_queue[0]
             if data.continuation is not None and len(data.data_queue) <= 1:
                 #self.log(log.debug, "Sending end of SEND message")
-                self.lp_queue.popleft()
-                if data.data_queue:
-                    self._send_payload(data.data_queue.popleft())
-                self.protocol.transport.write(data.msrpdata_forward.encode_end(data.continuation))
-                self.sending_data = False
-                self._unquench_check()
+                self.forward_send_queue.popleft()
+                chunk = data.consume_data()
+                if chunk is not None:
+                    self._send_payload(chunk)
+                self._send_payload(data.msrpdata_forward.encode_end(data.continuation))
+                if data.msrpdata_received.failure_report != 'no':
+                    timer = reactor.callLater(30, self.other_peer._cb_transaction_timeout, data)
+                    self.other_peer.send_transactions[data.msrpdata_forward.transaction_id] = (data, timer)
+                self.forwarding_send_request = False
+                self._maybe_resume_read()
             else:
-                try:
-                    chunk = data.data_queue.popleft()
-                except IndexError:
+                chunk = data.consume_data()
+                if chunk is None:
                     self._stop_sending()
                 else:
                     #self.log(log.debug, "Sending data for SEND message")
                     self._send_payload(chunk)
-                    data.pos += len(chunk)
-                    self._unquench_check()
-        elif self.lp_queue:
+                    data.position += len(chunk)
+                    self._maybe_resume_read()
+        elif self.forward_send_queue:
             #self.log(log.debug, "Sending headers for SEND message")
-            data = self.lp_queue[0]
-            self.sending_data = True
-            data.pos = data.msrpdata_forward.headers["Byte-Range"].decoded[0]
-            self.protocol.transport.write(data.msrpdata_forward.encode_start())
+            data = self.forward_send_queue[0]
+            self.forwarding_send_request = True
+            self._send_payload(data.msrpdata_forward.encode_start())
         else:
             self._stop_sending()
 
@@ -713,10 +792,4 @@ class Session(object):
         self.realm = realm
         self.downstream_bytes = 0
         self.upstream_bytes = 0
-
-    def generate_transaction_id(self):
-        while True:
-            transaction_id = b64encode(urandom(18), "Aa")
-            if transaction_id not in self.source.failure_reports and not (self.destination and transaction_id in self.destination.failure_reports):
-                return transaction_id
 

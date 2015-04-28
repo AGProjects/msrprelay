@@ -15,10 +15,13 @@
 #    with this program; if not, write to the Free Software Foundation, Inc.,
 #    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from collections import deque
 import re
 
+from collections import deque
+from random import getrandbits
+
 from twisted.protocols.basic import LineReceiver
+
 
 class MSRPError(Exception):
     pass
@@ -98,6 +101,10 @@ class MSRPHeader(object):
 
     def _encode(self, decoded):
         return decoded
+
+    def clone(self):
+        return self.__class__(self.name, self.encoded)
+
 
 class MSRPNamedHeader(MSRPHeader):
 
@@ -299,12 +306,12 @@ class ContentDispositionHeader(MSRPNamedHeader):
         return ";".join([disposition] + ["%s=%s" % pair for pair in parameters.iteritems()])
 
 class MSRPData(object):
-
-    def __init__(self, transaction_id, method = None, code = None, comment = None):
+    def __init__(self, transaction_id, method=None, code=None, comment=None, data=''):
         self.transaction_id = transaction_id
         self.method = method
         self.code = code
         self.comment = comment
+        self.data = data
         self.headers = {}
 
     def __str__(self):
@@ -364,8 +371,15 @@ class MSRPData(object):
     def encode_end(self, continuation):
         return "\r\n-------%s%s\r\n" % (self.transaction_id, continuation)
 
-    def encode(self):
-        return self.encode_start() + self.encode_end("$")
+    def encode(self, continuation='$'):
+        return self.encode_start() + self.data + self.encode_end(continuation)
+
+    def clone(self):
+        other = self.__class__(self.transaction_id, self.method, self.code, self.comment, self.data)
+        for header in self.headers.itervalues():
+            other.add_header(header.clone())
+        return other
+
 
 class MSRPProtocol(LineReceiver):
     MAX_LENGTH = 16384
@@ -383,7 +397,7 @@ class MSRPProtocol(LineReceiver):
         self.peer = self.factory.get_peer(self)
 
     def lineReceived(self, line):
-        if self.data: 
+        if self.data:
             if len(line) == 0:
                 self.term_buf_len = 12 + len(self.data.transaction_id)
                 self.term_buf = ""
@@ -450,6 +464,7 @@ class MSRPProtocol(LineReceiver):
     def connectionLost(self, reason):
         if self.peer:
             self.peer.connection_lost(reason.value)
+
 
 _re_uri = re.compile("^(?P<scheme>.*?)://(((?P<user>.*?)@)?(?P<host>.*?)(:(?P<port>[0-9]+?))?)(/(?P<session_id>.*?))?;(?P<transport>.*?)(;(?P<parameters>.*))?$")
 def parse_uri(uri_str):
@@ -525,3 +540,8 @@ class URI(object):
 
     def __ne__(self, other):
         return not self == other
+
+
+def generate_transaction_id():
+    return '%024x' % getrandbits(96)
+

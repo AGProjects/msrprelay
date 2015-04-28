@@ -17,16 +17,17 @@
 
 from msrp.protocol import *
 
-def generate_report(code, from_data, transaction_id, byte_count, reason = None):
-    report = MSRPData(transaction_id, method = "REPORT")
+def generate_report(code, forwarding_data, reason=None):
+    from_data = forwarding_data.msrpdata_received
+    report = MSRPData(generate_transaction_id(), method = "REPORT")
     report.add_header(ToPathHeader(from_data.headers["From-Path"].encoded))
     report.add_header(FromPathHeader([from_data.headers["To-Path"].decoded[0]]))
     report.add_header(StatusHeader((code, reason)))
     report.add_header(MessageIDHeader(from_data.headers["Message-ID"].encoded))
-    fro, to, total = from_data.headers["Byte-Range"].decoded
-    if byte_count:
-        to = fro + byte_count - 1
-        report.add_header(ByteRangeHeader([fro, to, total]))
+    start, end, total = forwarding_data.msrpdata_forward.headers["Byte-Range"].decoded
+    if forwarding_data.bytes_received:
+        end = start + forwarding_data.bytes_received - 1
+        report.add_header(ByteRangeHeader([start, end, total]))
     return report
 
 def exception_from_data(data):
