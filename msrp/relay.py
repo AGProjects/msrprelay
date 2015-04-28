@@ -47,7 +47,7 @@ class RelayConfig(ConfigSection):
     address = ConfigSetting(type=NetworkAddress, value=NetworkAddress("0.0.0.0:2855"))
     hostname = ""
     default_domain = ""
-    allow_other_methods = False
+    allow_other_methods = True
     session_expiration_time_minimum = 60
     session_expiration_time_default = 600
     session_expiration_time_maximum = 3600

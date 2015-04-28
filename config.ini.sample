@@ -24,8 +24,8 @@ key = tls/msrprelay.key
 ; for this host on port 2855, the default IANA MSRP port.
 address = 0.0.0.0:2855
 
-; Allow other methods besides SEND to be forwarded through the relay
-; allow_other_methods = No
+; Allow other methods besides the standard (SEND, REPORT, NICKNAME) to be forwarded through the relay
+; allow_other_methods = Yes
 
 ; Disable TLS and use TCP only for this MSRP Relay. As this breaks with
 ; specifications, only use it for debugging purposes.
