@@ -1,3 +1,14 @@
+msrprelay (1.1.0) unstable; urgency=medium
+
+  * Fix forwarding non-SEND requests and replies
+  * Make the code more RFC compliant
+  * Code cleanup
+  * Set allow_other_methods to True by default
+  * Drop Python < 2.7 support
+  * Bumped Debian Standards-Version
+
+ -- Saul Ibarra <saul@ag-projects.com>  Wed, 29 Apr 2015 10:59:58 +0200
+
 msrprelay (1.0.8) unstable; urgency=low
 
   * Added SIPThor integration
