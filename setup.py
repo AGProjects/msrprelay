@@ -14,10 +14,9 @@ def find_packages(toplevel):
 
 setup(name             = "msrprelay",
       version          = get_version(),
-      author           = "Ruud Klaver",
+      author           = "AG Projects",
       author_email     = "support@ag-projects.com",
-      maintainer       = "AG Projects",
-      maintainer_email = "support@ag-projects.com",
+      url              = "http://msrprelay.org/"
       description      = "A MSRP Relay.",
       license          = "GPL",
       platforms        = ["Platform Independent"],
