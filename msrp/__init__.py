@@ -1,5 +1,5 @@
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 
 runtime_directory = "/var/run/msrprelay"
 system_config_directory = "/etc/msrprelay"
