@@ -224,7 +224,7 @@ class StatusHeader(MSRPNamedHeader):
             comment = rest_sp[1]
         except IndexError:
             comment = None
-        return (code, comment)
+        return code, comment
 
     def _encode(self, decoded):
         code, comment = decoded
