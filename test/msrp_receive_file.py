@@ -8,14 +8,10 @@ from base64 import b64encode
 from getpass import getpass
 
 from twisted.names.srvconnect import SRVConnector
-from twisted.internet.protocol import ClientFactory, Protocol
-from twisted.protocols.basic import LineOnlyReceiver
+from twisted.internet.protocol import ClientFactory
 from twisted.internet import reactor
 
-from gnutls.constants import *
-from gnutls.crypto import *
-from gnutls.errors import *
-from gnutls.interfaces.twisted import X509Credentials
+from gnutls.interfaces.twisted import TLSContext, X509Credentials
 
 from msrp.protocol import *
 from msrp.digest import process_www_authenticate
@@ -138,10 +134,11 @@ if __name__ == "__main__":
         username, domain = sys.argv[1].split("@", 1)
         cred = X509Credentials(None, None)
         cred.verify_peer = False
+        ctx = TLSContext(cred)
         password = getpass()
         if len(sys.argv) == 2:
-            factory = MSRPFileReceiverFactory(username, password, URI(domain, use_tls = True))
-            connector = SRVConnector(reactor, "msrps", domain, factory, connectFuncName = "connectTLS", connectFuncArgs = [cred])
+            factory = MSRPFileReceiverFactory(username, password, URI(domain, use_tls=True))
+            connector = SRVConnector(reactor, "msrps", domain, factory, connectFuncName="connectTLS", connectFuncArgs=[ctx])
             connector.connect()
         else:
             relay_host = sys.argv[2]
@@ -149,6 +146,6 @@ if __name__ == "__main__":
                 relay_port = int(sys.argv[3])
             else:
                 relay_port = 2855
-            factory = MSRPFileReceiverFactory(username, password, URI(relay_host, port = relay_port, use_tls = True))
-            reactor.connectTLS(relay_host, relay_port, factory, cred)
+            factory = MSRPFileReceiverFactory(username, password, URI(relay_host, port=relay_port, use_tls=True))
+            reactor.connectTLS(relay_host, relay_port, factory, ctx)
         reactor.run()

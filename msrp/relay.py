@@ -14,8 +14,7 @@ from twisted.internet import reactor
 from twisted.internet.protocol import Factory, ClientFactory
 from twisted.internet.interfaces import IPullProducer
 
-from gnutls.constants import *
-from gnutls.interfaces.twisted import X509Credentials
+from gnutls.interfaces.twisted import TLSContext, X509Credentials
 
 from msrp.tls import Certificate, PrivateKey
 from msrp.protocol import *
@@ -62,11 +61,8 @@ class Relay(object):
             if RelayConfig.key is None:
                 raise RuntimeError("TLS private key file is not specified in configuration or is invalid")
             self.credentials = X509Credentials(RelayConfig.certificate, RelayConfig.key)
-            self.credentials.session_params.protocols = (PROTO_TLS1_1, PROTO_TLS1_0)
-            self.credentials.session_params.kx_algorithms = (KX_RSA,)
-            self.credentials.session_params.ciphers = (CIPHER_AES_128_CBC,)
-            self.credentials.session_params.mac_algorithms = (MAC_SHA1,)
             self.credentials.verify_peer = False
+            # TODO: add configuration option for configuring session parameters? -Saul
         if RelayConfig.hostname != "":
             self.hostname = RelayConfig.hostname
             if not RelayConfig.debug_notls:
@@ -89,7 +85,7 @@ class Relay(object):
         if RelayConfig.debug_notls:
             self.listener = reactor.listenTCP(RelayConfig.address[1], RelayFactory(), interface=RelayConfig.address[0])
         else:
-            self.listener = reactor.listenTLS(RelayConfig.address[1], RelayFactory(), self.credentials, interface=RelayConfig.address[0])
+            self.listener = reactor.listenTLS(RelayConfig.address[1], RelayFactory(), TLSContext(self.credentials), interface=RelayConfig.address[0])
 
     def run(self):
         self._do_run()
@@ -516,7 +512,7 @@ class Peer(object):
                 #self.log(log.debug, "Attempting to connect to %s" % str(uri))
                 factory = ConnectingFactory(self.other_peer)
                 if uri.use_tls:
-                    self.other_peer.connector = reactor.connectTLS(uri.host, uri.port, factory, self.relay.credentials)
+                    self.other_peer.connector = reactor.connectTLS(uri.host, uri.port, factory, TLSContext(self.relay.credentials))
                 else:
                     self.other_peer.connector = reactor.connectTCP(uri.host, uri.port, factory)
             else:
