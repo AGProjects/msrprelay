@@ -7,8 +7,7 @@ from application.configuration import ConfigSection, ConfigSetting
 from application.python.types import Singleton
 from application.system import host
 from application.process import process
-from gnutls.interfaces.twisted import X509Credentials
-from gnutls.constants import COMP_DEFLATE, COMP_LZO, COMP_NULL
+from gnutls.interfaces.twisted import TLSContext, X509Credentials
 from sqlobject import sqlhub, connectionForURI, SQLObject, StringCol, BLOBCol
 from sqlobject.dberrors import Error as SQLObjectError
 from twisted.internet.threads import deferToThread
@@ -66,8 +65,8 @@ class ThorNetworkService(EventServiceClient):
         self.shutdown_message = ThorEvent('Thor.Leave', self.node.id)
         credentials = X509Credentials(Config.certificate, Config.private_key, [Config.ca])
         credentials.verify_peer = True
-        credentials.session_params.compressions = (COMP_LZO, COMP_DEFLATE, COMP_NULL)
-        EventServiceClient.__init__(self, ThorNetworkConfig.domain, credentials)
+        tls_context = TLSContext(credentials)
+        EventServiceClient.__init__(self, ThorNetworkConfig.domain, tls_context)
         process.signals.add_handler(signal.SIGHUP, self._handle_SIGHUP)
         process.signals.add_handler(signal.SIGINT, self._handle_SIGINT)
         process.signals.add_handler(signal.SIGTERM, self._handle_SIGTERM)
