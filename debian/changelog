@@ -1,9 +1,9 @@
-msrprelay (1.2.1) UNRELEASED; urgency=medium
+msrprelay (1.2.1) unstable; urgency=medium
 
   * Adapt to changes in python-gnutls 3.0
   * Don't use mutable types as parameters
 
- -- Saul Ibarra <saul@ag-projects.com>  Mon, 22 Feb 2016 17:51:27 +0100
+ -- Saul Ibarra <saul@ag-projects.com>  Thu, 10 Mar 2016 12:05:02 +0100
 
 msrprelay (1.2.0) unstable; urgency=medium
 
