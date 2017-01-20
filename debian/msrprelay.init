@@ -27,6 +27,8 @@ DESC="MSRP Relay"
 
 test -f $SERVER || exit 0
 
+. /lib/lsb/init-functions
+
 if [ "$PID" != "/var/run/msrprelay/relay.pid" ]; then
     OPTIONS="--pid $PID $OPTIONS"
 fi
