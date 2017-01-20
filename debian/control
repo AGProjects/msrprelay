@@ -1,8 +1,8 @@
 Source: msrprelay
 Section: net
 Priority: optional
-Maintainer: Adrian Georgescu <ag@ag-projects.com>
-Uploaders: Saul Ibarra <saul@ag-projects.com>, Dan Pascu <dan@ag-projects.com>
+Maintainer: Dan Pascu <dan@ag-projects.com>
+Uploaders: Adrian Georgescu <ag@ag-projects.com>
 Build-Depends: debhelper (>= 9), python(>= 2.7)
 Standards-Version: 3.9.8
 
