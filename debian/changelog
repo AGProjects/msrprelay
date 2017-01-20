@@ -1,3 +1,12 @@
+msrprelay (1.2.2) unstable; urgency=medium
+
+  * Support systemd by redirecting init.d script calls to it if present
+  * Increased debian compatibility level to 9
+  * Updated debian standards version
+  * Updated debian maintainer
+
+ -- Dan Pascu <dan@ag-projects.com>  Fri, 20 Jan 2017 09:47:44 +0200
+
 msrprelay (1.2.1) unstable; urgency=medium
 
   * Adapt to changes in python-gnutls 3.0
