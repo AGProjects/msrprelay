@@ -25,6 +25,7 @@ if __name__ == "__main__":
     parser.add_argument('--no-fork', action='store_false', dest='fork', help='run in the foreground and log to terminal')
     parser.add_argument('--pid', dest='pid_file', default=default_pid, help='pid file when forking ({})'.format(default_pid), metavar='FILE')
     parser.add_argument('--config-file', default=default_config, help='configuration file to read', metavar='FILE')
+    parser.add_argument('--debug', action='store_true', help='enable verbose logging')
     parser.add_argument('--debug-memory', action='store_true', help='enable memory debugging')
 
     options = parser.parse_args()
@@ -55,7 +56,7 @@ if __name__ == "__main__":
 
     from msrp.relay import Relay, RelayConfig
 
-    log.level.current = RelayConfig.log_level
+    log.level.current = log.level.DEBUG if options.debug else RelayConfig.log_level
 
     if options.debug_memory:
         from application.debug.memory import memory_dump
