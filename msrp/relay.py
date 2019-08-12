@@ -112,7 +112,7 @@ class Relay(object):
         reactor.stop()
 
     def generate_uri(self):
-        return URI("%s" % self.hostname, port = RelayConfig.address[1], use_tls = not RelayConfig.debug_notls)
+        return URI(self.hostname, port=RelayConfig.address[1], use_tls=not RelayConfig.debug_notls)
 
 
 class RelayFactory(Factory):
