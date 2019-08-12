@@ -36,6 +36,7 @@ class Config(ConfigSection):
     private_key = ConfigSetting(type=PrivateKey, value=None)
     ca = ConfigSetting(type=Certificate, value=None)
 
+
 class ThorNetworkConfig(ConfigSection):
     __cfgfile__ = configuration_filename
     __section__ = 'ThorNetwork'
@@ -47,9 +48,10 @@ class ThorNetworkConfig(ConfigSection):
 class Subscribers(SQLObject):
     class sqlmeta:
         table = Config.subscriber_table
-    username = StringCol(dbName = Config.username_col)
-    domain = StringCol(dbName = Config.domain_col)
-    profile = BLOBCol(dbName = Config.profile_col)
+    username = StringCol(dbName=Config.username_col)
+    domain = StringCol(dbName=Config.domain_col)
+    profile = BLOBCol(dbName=Config.profile_col)
+
 
 sqlhub.processConnection = connectionForURI(Config.uri)
 
@@ -74,10 +76,10 @@ class ThorNetworkService(EventServiceClient):
     def handle_event(self, event):
         # print "Received event: %s" % event
         networks = self.networks
-        role_map = ThorEntitiesRoleMap(event.message) ## mapping between role names and lists of nodes with that role
+        role_map = ThorEntitiesRoleMap(event.message)  # mapping between role names and lists of nodes with that role
         for role in ["msrprelay_server"]:
             try:
-                network = networks[role] ## avoid setdefault here because it always evaluates the 2nd argument
+                network = networks[role]  # avoid setdefault here because it always evaluates the 2nd argument
             except KeyError:
                 from thor import network as thor_network
                 network = thor_network.new(Config.multiply)
@@ -96,7 +98,7 @@ class ThorNetworkService(EventServiceClient):
                     network.add_node(node)
                 plural = len(added_nodes) != 1 and 's' or ''
                 log.msg("added %s node%s: %s" % (role, plural, ', '.join(added_nodes)))
-            #print "Thor %s nodes: %s" % (role, str(network.nodes))
+            # print "Thor %s nodes: %s" % (role, str(network.nodes))
 
 
 class Checker(object):
