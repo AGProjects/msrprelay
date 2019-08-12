@@ -53,6 +53,14 @@ if __name__ == '__main__':
 
     log.info('Starting %s %s' % (fullname, msrp.__version__))
 
+    try:
+        process.wait_for_network(wait_time=10, wait_message='Waiting for network to become available...')
+    except KeyboardInterrupt:
+        sys.exit(0)
+    except RuntimeError as e:
+        log.critical('Cannot start %s: %s' % (fullname, e))
+        sys.exit(1)
+
     from msrp.relay import Relay, RelayConfig
 
     log.level.current = log.level.DEBUG if options.debug else RelayConfig.log_level
