@@ -3,9 +3,8 @@
 """MSRP Relay"""
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     import msrp
-    import os
     import sys
     import signal
 
@@ -13,18 +12,19 @@ if __name__ == "__main__":
     from application.process import process, ProcessError
     from argparse import ArgumentParser
 
-    name = "msrprelay"
-    fullname = "MSRP Relay"
-    description = "An open source MSRP Relay"
+    name = 'msrprelay'
+    fullname = 'MSRP Relay'
+    description = 'An open source MSRP Relay'
 
-    default_pid = os.path.join(msrp.runtime_directory, "relay.pid")
-    default_config = os.path.join(msrp.system_config_directory , msrp.configuration_filename)
+    process.configuration.user_directory = None
+    process.configuration.subdirectory = name
+    # process.runtime.subdirectory = name
 
     parser = ArgumentParser(usage='%(prog)s [options]')
     parser.add_argument('--version', action='version', version='%(prog)s {}'.format(msrp.__version__))
     parser.add_argument('--no-fork', action='store_false', dest='fork', help='run in the foreground and log to terminal')
-    parser.add_argument('--pid', dest='pid_file', default=default_pid, help='pid file when forking ({})'.format(default_pid), metavar='FILE')
-    parser.add_argument('--config-file', default=default_config, help='configuration file to read', metavar='FILE')
+    parser.add_argument('--config-dir', dest='config_directory', default=None, help='the configuration directory', metavar='PATH')
+    parser.add_argument('--runtime-dir', dest='runtime_directory', default=None, help='the runtime directory ({})'.format(process.runtime.directory), metavar='PATH')
     parser.add_argument('--debug', action='store_true', help='enable verbose logging')
     parser.add_argument('--debug-memory', action='store_true', help='enable memory debugging')
 
@@ -32,20 +32,14 @@ if __name__ == "__main__":
 
     log.Formatter.prefix_format = '{record.levelname:<8s} '
 
-    pid_file = options.pid_file
-    system_config_directory, msrp.configuration_filename = os.path.split(options.config_file)
-    if system_config_directory != "":
-        msrp.system_config_directory = system_config_directory
-
-    process.system_config_directory = msrp.system_config_directory
-    try:
-        process.runtime_directory = msrp.runtime_directory
-    except ProcessError, e:
-        log.critical('Cannot start %s: %s' % (fullname, e))
-        sys.exit(1)
+    if options.config_directory is not None:
+        process.configuration.local_directory = options.config_directory
+    if options.runtime_directory is not None:
+        process.runtime.directory = options.runtime_directory
 
     if options.fork:
         try:
+            pid_file = '{}.pid'.format(name)
             process.daemonize(pid_file)
         except ProcessError, e:
             log.critical('Cannot start %s: %s' % (fullname, e))

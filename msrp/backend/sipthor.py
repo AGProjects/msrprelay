@@ -12,7 +12,7 @@ from sqlobject import sqlhub, connectionForURI, SQLObject, StringCol, BLOBCol
 from sqlobject.dberrors import Error as SQLObjectError
 from twisted.internet.threads import deferToThread
 
-from msrp import configuration_filename, __version__
+from msrp import configuration_file, __version__
 from msrp.digest import LoginFailed
 from msrp.tls import Certificate, PrivateKey
 
@@ -22,7 +22,7 @@ from thor.tls import X509NameValidator
 
 
 class Config(ConfigSection):
-    __cfgfile__ = configuration_filename
+    __cfgfile__ = configuration_file
     __section__ = 'SIPThor'
 
     cleartext_passwords = True
@@ -38,7 +38,7 @@ class Config(ConfigSection):
 
 
 class ThorNetworkConfig(ConfigSection):
-    __cfgfile__ = configuration_filename
+    __cfgfile__ = configuration_file
     __section__ = 'ThorNetwork'
 
     domain = "sipthor-domain"

@@ -7,10 +7,10 @@ from application.configuration import *
 from twisted.internet.threads import deferToThread
 
 from msrp.digest import LoginFailed
-from msrp import configuration_filename
+from msrp import configuration_file
 
 class Config(ConfigSection):
-    __cfgfile__ = configuration_filename
+    __cfgfile__ = configuration_file
     __section__ = 'Database'
 
     cleartext_passwords = True

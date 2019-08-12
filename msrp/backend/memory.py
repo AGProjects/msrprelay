@@ -4,9 +4,9 @@ from application.configuration import *
 from twisted.internet.defer import succeed, fail
 
 from msrp.digest import LoginFailed
-from msrp import configuration_filename
+from msrp import configuration_file
 
-config = ConfigFile(configuration_filename)
+config = ConfigFile(configuration_file)
 config.cleartext_passwords = True
 config.user_db = dict(config.get_section("Memory", default=[]))
 

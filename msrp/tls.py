@@ -9,7 +9,7 @@ class _FileError(Exception): pass
 
 
 def file_content(file):
-    path = process.config_file(file)
+    path = process.configuration.file(file)
     if path is None:
         raise _FileError("File '%s' does not exist" % file)
     try:

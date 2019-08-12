@@ -22,11 +22,11 @@ from msrp.tls import Certificate, PrivateKey
 from msrp.protocol import *
 from msrp.digest import AuthChallenger, LoginFailed
 from msrp.responses import *
-from msrp import configuration_filename
+from msrp import configuration_file
 
 
 class RelayConfig(ConfigSection):
-    __cfgfile__ = configuration_filename
+    __cfgfile__ = configuration_file
     __section__ = 'Relay'
 
     address = ConfigSetting(type=NetworkAddress, value=NetworkAddress("0.0.0.0:2855"))
