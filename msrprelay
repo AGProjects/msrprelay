@@ -4,13 +4,14 @@
 
 
 if __name__ == "__main__":
+    import msrp
     import os
     import sys
     import signal
-    from optparse import OptionParser
-    from application.process import process, ProcessError
+
     from application import log
-    import msrp
+    from application.process import process, ProcessError
+    from argparse import ArgumentParser
 
     name = "msrprelay"
     fullname = "MSRP Relay"
@@ -19,11 +20,13 @@ if __name__ == "__main__":
     default_pid = os.path.join(msrp.runtime_directory, "relay.pid")
     default_config = os.path.join(msrp.system_config_directory , msrp.configuration_filename)
 
-    parser = OptionParser(version="%%prog %s" % msrp.__version__)
-    parser.add_option("--no-fork", action="store_false", dest="fork", default=1, help="run the process in the foreground (for debugging)")
-    parser.add_option("--pid", dest="pid_file", default=default_pid, help='pid file ("%s")' % default_pid, metavar="File")
-    parser.add_option("--config-file", dest="config_file", default=default_config, help='path to configuration file to read ("%s")' % msrp.configuration_filename, metavar="File")
-    (options, args) = parser.parse_args()
+    parser = ArgumentParser(usage='%(prog)s [options]')
+    parser.add_argument('--version', action='version', version='%(prog)s {}'.format(msrp.__version__))
+    parser.add_argument('--no-fork', action='store_false', dest='fork', help='run in the foreground and log to terminal')
+    parser.add_argument('--pid', dest='pid_file', default=default_pid, help='pid file when forking ({})'.format(default_pid), metavar='FILE')
+    parser.add_argument('--config-file', default=default_config, help='configuration file to read', metavar='FILE')
+
+    options = parser.parse_args()
 
     log.Formatter.prefix_format = '{record.levelname:<8s} '
 
