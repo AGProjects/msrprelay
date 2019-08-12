@@ -25,6 +25,8 @@ if __name__ == "__main__":
     parser.add_option("--config-file", dest="config_file", default=default_config, help='path to configuration file to read ("%s")' % msrp.configuration_filename, metavar="File")
     (options, args) = parser.parse_args()
 
+    log.Formatter.prefix_format = '{record.levelname:<8s} '
+
     pid_file = options.pid_file
     system_config_directory, msrp.configuration_filename = os.path.split(options.config_file)
     if system_config_directory != "":
@@ -34,18 +36,18 @@ if __name__ == "__main__":
     try:
         process.runtime_directory = msrp.runtime_directory
     except ProcessError, e:
-        log.fatal("Cannot start %s: %s" % (fullname, e))
+        log.critical('Cannot start %s: %s' % (fullname, e))
         sys.exit(1)
 
     if options.fork:
         try:
             process.daemonize(pid_file)
         except ProcessError, e:
-            log.fatal("Cannot start %s: %s" % (fullname, e))
+            log.critical('Cannot start %s: %s' % (fullname, e))
             sys.exit(1)
-        log.start_syslog(name)
+        log.use_syslog(name)
 
-    log.msg("Starting %s %s" % (fullname, msrp.__version__))
+    log.info('Starting %s %s' % (fullname, msrp.__version__))
 
     from msrp.relay import Relay, RelayConfig
 
@@ -56,9 +58,9 @@ if __name__ == "__main__":
             from application.debug.memory import *
         relay = Relay()
     except Exception, e:
-        log.fatal("failed to create %s: %s" % (fullname, e))
+        log.critical('Failed to create %s: %s' % (fullname, e))
         if e.__class__ is not RuntimeError:
-            log.err()
+            log.exception()
         sys.exit(1)
 
     process.signals.add_handler(signal.SIGHUP, lambda signum, frame: relay.reload())
@@ -66,9 +68,9 @@ if __name__ == "__main__":
     try:
         relay.run()
     except Exception, e:
-        log.fatal("failed to run %s: %s" % (fullname, e))
+        log.critical('Failed to run %s: %s' % (fullname, e))
         if e.__class__ is not RuntimeError:
-            log.err()
+            log.exception()
         sys.exit(1)
 
     if not options.fork:

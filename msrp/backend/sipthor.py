@@ -92,12 +92,12 @@ class ThorNetworkService(EventServiceClient):
                 for node in removed_nodes:
                     network.remove_node(node)
                 plural = len(removed_nodes) != 1 and 's' or ''
-                log.msg("removed %s node%s: %s" % (role, plural, ', '.join(removed_nodes)))
+                log.info('removed %s node%s: %s', role, plural, ', '.join(removed_nodes))
             if added_nodes:
                 for node in added_nodes:
                     network.add_node(node)
                 plural = len(added_nodes) != 1 and 's' or ''
-                log.msg("added %s node%s: %s" % (role, plural, ', '.join(added_nodes)))
+                log.info('added %s node%s: %s', role, plural, ', '.join(added_nodes))
             # print "Thor %s nodes: %s" % (role, str(network.nodes))
 
 

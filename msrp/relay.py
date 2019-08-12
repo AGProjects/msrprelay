@@ -1,4 +1,6 @@
 
+import weakref
+
 from copy import copy
 from collections import deque
 
@@ -91,14 +93,14 @@ class Relay(object):
         reactor.run()
 
     def reload(self):
-        log.debug("Reloading configuration file")
+        log.debug('Reloading configuration file')
         RelayConfig.reset()
         RelayConfig.read()
         if not self.listener:
             try:
                 self._do_init()
             except RuntimeError, e:
-                log.fatal("Error reloading configuration file: %s" % e)
+                log.critical('Error reloading configuration file: %s' % e)
                 reactor.stop()
         else:
             result = self.listener.stopListening()
@@ -107,7 +109,7 @@ class Relay(object):
 
     def _reload_failure(self, failure):
         failure.trap(RuntimeError)
-        log.fatal("Error reloading configuration file: %s" % failure.value)
+        log.critical('Error reloading configuration file: %s' % failure.value)
         reactor.stop()
 
     def generate_uri(self):
@@ -172,6 +174,23 @@ class ForwardingSendData(ForwardingData):
     def __init__(self, msrpdata):
         super(ForwardingSendData, self).__init__(msrpdata)
         self.position = msrpdata.headers["Byte-Range"].decoded[0]
+
+
+class PeerLogger(log.ContextualLogger):
+    def __init__(self, peer):
+        super(PeerLogger, self).__init__(logger=log.get_logger())
+        self.peer = weakref.ref(peer)
+
+    def apply_context(self, message):
+        peer = self.peer()
+        if message == '' or peer is None:
+            return message  # cannot apply context if there is no message or peer to provide the context
+        elif peer.session is not None:
+            return 'session {session.session_id} for {session.username}@{session.realm} ({state}): {message}'.format(session=peer.session, state=peer.state, message=message)
+        elif peer.protocol is not None:
+            return '{address.host}:{address.port} ({state}): {message}'.format(address=peer.protocol.transport.getPeer(), state=peer.state, message=message)
+        else:
+            return message  # peer exists, but both peer.session and peer.protocol are None so there is no context to apply
 
 
 # A session always exists of two peer instances that are associated with
@@ -251,21 +270,12 @@ class Peer(object):
         self.forward_other_queue = deque()
         self.read_paused = False
         self.relay = Relay()
-
-    def __str__(self):
-        if self.session is None:
-            address = self.protocol.transport.getPeer()
-            return "%s:%d (%s)" % (address.host, address.port, self.state)
-        else:
-            return "session %s for %s@%s (%s)" % (self.session.session_id, self.session.username, self.session.realm, self.state)
-
-    def log(self, log_func, msg):
-        log_func("%s: %s" % (str(self), msg))
+        self.logger = PeerLogger(self)
 
     # called by MSRPProtocol
 
     def data_start(self, msrpdata):
-        #self.log(log.debug, "Received headers for %s" % str(msrpdata))
+        # self.logger.debug('Received headers for %s', msrpdata)
         if self.state == "NEW":
             result = maybeDeferred(self._unbound_peer_data, msrpdata)
             result.addErrback(self._cb_catch_response, msrpdata)
@@ -273,11 +283,11 @@ class Peer(object):
             self._bound_peer_data(msrpdata)
 
     def write_chunk(self, chunk):
-        #self.log(log.debug, "Received %d bytes of MSRP body" % len(chunk))
+        # self.logger.debug("Received %d bytes of MSRP body", len(chunk))
         if self.state == "ESTABLISHED" and self.forwarding_data:
             self.forwarding_data.add_data(chunk)
             if self.forwarding_data.method != 'SEND' and self.forwarding_data.bytes_in_queue > 10240:
-                self.log(log.debug, "Non-SEND request's payload bigger than 10KB, closing connection")
+                self.logger.debug('Non-SEND request payload bigger than 10KB, closing connection')
                 del self.other_transactions[self.forwarding_data.msrpdata_forward.transaction_id]
                 self.forwarding_data = None
                 self.protocol.transport.loseConnection()
@@ -286,7 +296,7 @@ class Peer(object):
             self.other_peer.start_sending()
 
     def data_end(self, continuation):
-        #self.log(log.debug, "Received termination \"%s\"" % continuation)
+        # self.logger.debug('Received termination "%s"', continuation)
         if self.state == "ESTABLISHED" and self.forwarding_data:
             msrpdata = self.forwarding_data.msrpdata_received
             if msrpdata.method == "SEND":
@@ -307,7 +317,7 @@ class Peer(object):
             self.forwarding_data = None
 
     def connection_lost(self, reason):
-        self.log(log.debug, "Connection lost: %s" % reason)
+        self.logger.debug('Connection lost: %s', reason)
         if self.invalid_timer and self.invalid_timer.active():
             self.invalid_timer.cancel()
             self.invalid_timer = None
@@ -317,13 +327,13 @@ class Peer(object):
             del self.relay.unbound_sessions[self.session.session_id]
         self.state = "DISCONNECTED"
         if self.session is not None and self is self.session.source:
-            self.log(log.debug, "bytes sent: %d, bytes received: %d" % (self.session.upstream_bytes, self.session.downstream_bytes))
+            self.logger.debug('bytes sent: %d, bytes received: %d', self.session.upstream_bytes, self.session.downstream_bytes)
         self._cleanup()
 
     # called by ConnectingFactory
 
     def connection_failed(self, reason):
-        self.log(log.warn, "Connection failed: %s" % reason)
+        self.logger.warning('Connection failed: %s', reason)
         if self.state == "CONNECTING":
             self.other_peer.disconnect()
         self._cleanup()
@@ -331,17 +341,17 @@ class Peer(object):
     # methods for an unbound peer
 
     def _cb_invalid(self):
-        self.log(log.warn, "No valid MSRP message received, disconnecting")
+        self.logger.warning('No valid MSRP message received, disconnecting')
         self.invalid_timer = None
         self.disconnect()
 
     def _cb_catch_response(self, failure, msrpdata):
         failure.trap(ResponseException)
         if msrpdata.method is None:
-            self.log(log.warn, "Caught exception to response: %s (%s)" % (failure.value.__class__.__name__, failure.value.data.comment))
+            self.logger.warning('Caught exception to response: %s (%s)', failure.value.__class__.__name__, failure.value.data.comment)
             return
         response = failure.value.data
-        #self.log(log.debug, "Sending response %03d (%s)" % (response.code, response.comment))
+        # self.logger.debug('Sending response %03d (%s)', response.code, response.comment)
         self.enqueue(response.encode())
 
     def _unbound_peer_data(self, msrpdata):
@@ -349,7 +359,7 @@ class Peer(object):
             msrpdata.verify_headers()
         except ParsingError, e:
             if isinstance(e, HeaderParsingError) and (e.header == "To-Path" or e.header == "From-Path"):
-                self.log(log.warn, "Cannot send error response, path headers unreadable")
+                self.logger.warning('Cannot send error response, path headers unreadable')
                 return
             else:
                 raise ResponseUnintelligible(msrpdata, e.args[0])
@@ -364,7 +374,7 @@ class Peer(object):
                 session = self.relay.unbound_sessions[session_id]
             except KeyError:
                 raise ResponseNoSession(msrpdata)
-            self.log(log.debug, "Found matching unbound session %s" % session.session_id)
+            self.logger.debug('Found matching unbound session %s', session.session_id)
             self.state = "ESTABLISHED"
             self.invalid_timer.cancel()
             self.invalid_timer = None
@@ -414,9 +424,9 @@ class Peer(object):
             try:
                 username = msrpdata.headers["Authorization"].decoded["username"]
             except IndexError:
-                self.log(log.warn, "AUTH failed, no username: %s" % failure.value.args[0])
+                self.logger.warning('AUTH failed, no username: %s', failure.value.args[0])
             else:
-                self.log(log.warn, 'AUTH failed for username "%s": %s' % (username, failure.value.args[0]))
+                self.logger.warning('AUTH failed for username "%s": %s', username, failure.value.args[0])
         if self.auth_attempts == RelayConfig.max_auth_attempts:
             self.disconnect()
         else:
@@ -447,13 +457,13 @@ class Peer(object):
         uri.session_id = session_id
         use_path.append(uri)
         headers = [UsePathHeader(use_path), ExpiresHeader(expire), AuthenticationInfoHeader(authentication_info)]
-        self.log(log.debug, "AUTH succeeded, creating new session")
+        self.logger.debug('AUTH succeeded, creating new session')
         raise ResponseOK(msrpdata, headers = headers)
 
     # methods for a unconnected peer
 
     def got_protocol(self, protocol):
-        self.log(log.debug, "Successfully connected")
+        self.logger.debug('Successfully connected')
         self.state = "ESTABLISHED"
         self.protocol = protocol
         if self.forward_other_queue or self.forward_send_queue:
@@ -473,7 +483,7 @@ class Peer(object):
                 msrpdata.verify_headers()
             except ParsingError, e:
                 if isinstance(e, HeaderParsingError) and (e.header == "To-Path" or e.header == "From-Path"):
-                    self.log(log.error, "Cannot send error response, path headers unreadable")
+                    self.logger.error('Cannot send error response, path headers unreadable')
                     return
                 else:
                     raise ResponseUnintelligible(msrpdata, e.args[0])
@@ -501,14 +511,14 @@ class Peer(object):
                 use_path = list(reversed(use_path))
                 use_path.append(relay_uri)
                 headers = [UsePathHeader(use_path), ExpiresHeader(expire)]
-                self.log(log.debug, "Received refreshing AUTH")
+                self.logger.debug('Received refreshing AUTH')
                 raise ResponseOK(msrpdata, headers=headers)
             if self.state == "UNBOUND":
                 if msrpdata.method != "SEND":
                     raise ResponseNoSession(msrpdata, "Non-SEND method received on unbound session")
                 self.got_destination(Peer(path = to_path, session = self.session, other_peer = self))
                 uri = to_path[0]
-                #self.log(log.debug, "Attempting to connect to %s" % str(uri))
+                # self.logger.debug('Attempting to connect to %s', uri)
                 factory = ConnectingFactory(self.other_peer)
                 if uri.use_tls:
                     self.other_peer.connector = reactor.connectTLS(uri.host, uri.port, factory, TLSContext(self.relay.credentials))
@@ -547,7 +557,7 @@ class Peer(object):
                     from_path_header.decoded = from_path
                     self.other_peer.enqueue(forward.encode())
                 else:
-                    self.log(log.debug, "Received response for untracked request: %s" % msrpdata)
+                    self.logger.debug('Received response for untracked request: %s', msrpdata)
             elif msrpdata.method in ("SEND", "REPORT", "NICKNAME") or RelayConfig.allow_other_methods:
                 # Do the magic of appending the first To-Path URI to the From-Path.
                 to_path = copy(msrpdata.headers["To-Path"].decoded)
@@ -573,7 +583,7 @@ class Peer(object):
                 raise ResponseUnknownMethod(msrpdata)
         except ResponseException, e:
             if msrpdata.method is None:
-                self.log(log.debug, "Caught exception to response: %s (%s)" % (e.__class__.__name__, e.data.comment))
+                self.logger.debug('Caught exception to response: %s (%s)', e.__class__.__name__, e.data.comment)
                 return
             response = e.data
             self.enqueue(response.encode())
@@ -590,7 +600,7 @@ class Peer(object):
             del self.other_transactions[transaction_id]
 
     def enqueue(self, msrpdata):
-        #self.log(log.debug, "Enqueuing %s" % str(msrpdata))
+        # self.logger.debug('Enqueuing %s', msrpdata)
         if isinstance(msrpdata, ForwardingData):
             self.forward_send_queue.append(msrpdata)
         else:    # a string containing a request or response
@@ -600,12 +610,12 @@ class Peer(object):
 
     def start_sending(self):
         if self.state not in ["CONNECTING", "DISCONNECTED"] and not self.registered:
-            #self.log(log.debug, "Starting transmission")
+            # self.logger.debug('Starting transmission')
             self.registered = True
             self.protocol.transport.registerProducer(self, False)
 
     def _stop_sending(self):
-        #self.log(log.debug, "Empty queues, halting transmission")
+        # self.logger.debug('Empty queues, halting transmission')
         self.registered = False
         self.protocol.transport.unregisterProducer()
         if self.state == "DISCONNECTING":
@@ -613,7 +623,7 @@ class Peer(object):
             self.protocol.transport.loseConnection()
 
     def disconnect(self):
-        #self.log(log.debug, "Disconnecting when possible")
+        # self.logger.debug('Disconnecting when possible')
         if self.invalid_timer and self.invalid_timer.active():
             self.invalid_timer.cancel()
             self.invalid_timer = None
@@ -691,7 +701,7 @@ class Peer(object):
     def resumeProducing(self):
         if self.forward_other_queue:
             if self.forwarding_send_request:
-                #self.log(log.debug, "Sending other message, aborting SEND")
+                # self.logger.debug('Sending other message, aborting SEND')
                 data = self.forward_send_queue.popleft()
                 # terminate the current chunk
                 self._send_payload(data.msrpdata_forward.encode_end("+"))
@@ -715,13 +725,13 @@ class Peer(object):
                     self.other_peer.forwarding_data = new_data
                 self.forwarding_send_request = False
             else:
-                #self.log(log.debug, "Sending message")
+                # self.logger.debug('Sending message')
                 self._send_payload(self.forward_other_queue.popleft())
             self._maybe_resume_read()
         elif self.forwarding_send_request:
             data = self.forward_send_queue[0]
             if data.continuation is not None and len(data.data_queue) <= 1:
-                #self.log(log.debug, "Sending end of SEND message")
+                # self.logger.debug('Sending end of SEND message')
                 self.forward_send_queue.popleft()
                 chunk = data.consume_data()
                 if chunk is not None:
@@ -737,12 +747,12 @@ class Peer(object):
                 if chunk is None:
                     self._stop_sending()
                 else:
-                    #self.log(log.debug, "Sending data for SEND message")
+                    # self.logger.debug('Sending data for SEND message')
                     self._send_payload(chunk)
                     data.position += len(chunk)
                     self._maybe_resume_read()
         elif self.forward_send_queue:
-            #self.log(log.debug, "Sending headers for SEND message")
+            # self.logger.debug('Sending headers for SEND message')
             data = self.forward_send_queue[0]
             self.forwarding_send_request = True
             self._send_payload(data.msrpdata_forward.encode_start())
