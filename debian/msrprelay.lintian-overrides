@@ -1,2 +1,4 @@
 # This file will contain passwords.
 msrprelay: non-standard-file-perm etc/msrprelay/config.ini 0600 != 0644
+# No manual page available. Run it with --help for options
+msrprelay: binary-without-manpage usr/bin/msrprelay
