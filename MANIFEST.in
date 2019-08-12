@@ -1,5 +1,5 @@
 recursive-include debian changelog compat control copyright rules
-recursive-include debian *.init *.lintian-overrides
+recursive-include debian *.lintian-overrides *.service
 recursive-include test   README *.py
 recursive-include tls    README *.sh
 prune debian/tmp
