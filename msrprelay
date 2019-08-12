@@ -25,6 +25,7 @@ if __name__ == "__main__":
     parser.add_argument('--no-fork', action='store_false', dest='fork', help='run in the foreground and log to terminal')
     parser.add_argument('--pid', dest='pid_file', default=default_pid, help='pid file when forking ({})'.format(default_pid), metavar='FILE')
     parser.add_argument('--config-file', default=default_config, help='configuration file to read', metavar='FILE')
+    parser.add_argument('--debug-memory', action='store_true', help='enable memory debugging')
 
     options = parser.parse_args()
 
@@ -56,9 +57,10 @@ if __name__ == "__main__":
 
     log.level.current = RelayConfig.log_level
 
+    if options.debug_memory:
+        from application.debug.memory import memory_dump
+
     try:
-        if not options.fork:
-            from application.debug.memory import *
         relay = Relay()
     except Exception, e:
         log.critical('Failed to create %s: %s' % (fullname, e))
@@ -76,6 +78,5 @@ if __name__ == "__main__":
             log.exception()
         sys.exit(1)
 
-    if not options.fork:
-        #from application.debug.memory import *
+    if options.debug_memory:
         memory_dump()
