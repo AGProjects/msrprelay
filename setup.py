@@ -30,6 +30,7 @@ setup(
         'Programming Language :: Python',
     ],
 
+    data_files=[('/etc/msrprelay', ['config.ini.sample'])],
     packages=find_packages('msrp'),
     scripts=['msrprelay']
 )
