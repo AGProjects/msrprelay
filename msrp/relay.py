@@ -53,7 +53,6 @@ class Relay(object):
 
     def _do_init(self):
         self.listener = None
-        log.level.current = RelayConfig.log_level
         self.backend = __import__("msrp.backend.%s" % RelayConfig.backend.lower(), globals(), locals(), [""]).Checker()
         if not RelayConfig.debug_notls:
             if RelayConfig.certificate is None:
