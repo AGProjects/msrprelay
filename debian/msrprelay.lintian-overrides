@@ -1,0 +1,2 @@
+# This file will contain passwords.
+msrprelay: non-standard-file-perm etc/msrprelay/config.ini 0600 != 0644

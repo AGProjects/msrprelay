@@ -13,3 +13,7 @@ override_dh_auto_install:
 	dh_auto_install
 	mv debian/msrprelay/etc/msrprelay/config.ini.sample debian/msrprelay/etc/msrprelay/config.ini
 
+override_dh_fixperms:
+	dh_fixperms
+	chmod 600 debian/msrprelay/etc/msrprelay/config.ini
+
