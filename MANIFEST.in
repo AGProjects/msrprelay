@@ -5,5 +5,4 @@ recursive-include test   README *.py
 recursive-include tls    README *.sh
 prune debian/tmp
 prune debian/msrprelay
-prune debian/python-module-stampdir
 include Changelog INSTALL LICENSE MANIFEST.in
