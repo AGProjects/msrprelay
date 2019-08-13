@@ -6,4 +6,4 @@ recursive-include tls    README *.sh
 prune debian/tmp
 prune debian/msrprelay
 prune debian/python-module-stampdir
-include config.ini.sample MANIFEST.in LICENSE INSTALL Changelog
+include Changelog INSTALL LICENSE MANIFEST.in
