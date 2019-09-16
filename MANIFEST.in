@@ -7,11 +7,13 @@ include debian/changelog
 include debian/compat
 include debian/control
 include debian/copyright
+include debian/docs
 include debian/install
 include debian/lintian-overrides
 include debian/msrprelay.service
 include debian/rules
 include debian/source/format
+include debian/README.Debian
 
 recursive-include test README *.py
 recursive-include tls  README *.sh

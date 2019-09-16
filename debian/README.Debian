@@ -1,0 +1,31 @@
+
+Server configuration
+--------------------
+
+The server configuration is at /etc/msrprelay/config.ini
+
+At the very least the TLS certificates and the authentication
+backend need to be configured.
+
+Self signed TLS certificates can be generated using the scripts
+that can be found at /usr/share/msrprelay/tls
+
+The relay will reload its configuration file when it receives the HUP signal.
+All of the already established sessions will continue to work using the old
+settings until they disconnect. This allows for changes in the configuration
+without disruption of service.
+
+Note: at the moment the backend configurations are not re-read.
+
+
+DNS configuration
+-----------------
+
+For each domain served by the relay the following DNS record must be added to
+the name servers authoritative for the domain:
+
+_msrps._tcp.example.com. IN SRV	0 0 2855 msrprelay.example.com.
+msrprelay.example.com. IN A 10.0.0.1
+
+Replace the domain name, hostname and IP address with the real ones.
+
