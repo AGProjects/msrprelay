@@ -17,3 +17,5 @@
 ^config\.ini$
 ^build($|/)
 ^dist($|/)
+
+^tls/.*\.(crt|key|pem)$
