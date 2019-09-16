@@ -7,6 +7,7 @@ include debian/changelog
 include debian/compat
 include debian/control
 include debian/copyright
+include debian/install
 include debian/lintian-overrides
 include debian/msrprelay.service
 include debian/rules
