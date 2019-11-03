@@ -1,3 +1,22 @@
+msrprelay (1.3.0) unstable; urgency=medium
+
+  * Refactored debian packaging
+  * Refactored setup.py
+  * Switched from the init script to a systemd service file
+  * Install the sample configuration file from setup.py
+  * Display the default configuration directory in the help output
+  * Added code to wait for the network to be available when starting
+  * Added command line option to run as a systemd service
+  * Adapted to process API changes in python-application 2.8.0
+  * Added command line option to enable verbose logging
+  * Added command line option for memory debugging
+  * Use the argparse module for parsing command line arguments
+  * Updated to the logging API in python-application 2.8.0
+  * Initialize the log level in the main script
+  * Fixed some PEP-8 compliance issues
+
+ -- Adrian Georgescu <ag@ag-projects.com>  Sun, 03 Nov 2019 09:41:10 -0300
+
 msrprelay (1.2.2) unstable; urgency=medium
 
   * Support systemd by redirecting init.d script calls to it if present
