@@ -1,21 +1,44 @@
 msrprelay (1.3.0) unstable; urgency=medium
 
-  * Refactored debian packaging
-  * Refactored setup.py
-  * Switched from the init script to a systemd service file
-  * Install the sample configuration file from setup.py
-  * Display the default configuration directory in the help output
-  * Added code to wait for the network to be available when starting
-  * Added command line option to run as a systemd service
-  * Adapted to process API changes in python-application 2.8.0
-  * Added command line option to enable verbose logging
-  * Added command line option for memory debugging
-  * Use the argparse module for parsing command line arguments
-  * Updated to the logging API in python-application 2.8.0
-  * Initialize the log level in the main script
   * Fixed some PEP-8 compliance issues
+  * Initialize the log level in the main script
+  * Updated to the logging API in python-application 2.8.0
+  * Use the argparse module for parsing command line arguments
+  * Added command line option for memory debugging
+  * Added command line option to enable verbose logging
+  * Adapted to process API changes in python-application 2.8.0
+  * Added command line option to run as a systemd service
+  * Added code to wait for the network to be available when starting
+  * Display the default configuration directory in the help output
+  * Refactored setup.py
+  * Install the sample configuration file from setup.py
+  * Updated copyright years
+  * Added debian/source/format to MANIFEST.in
+  * Added boring file
+  * Removed duplicate changelog
+  * Removed no longer needed entry in MANIFEST.in
+  * Made MANIFEST.in more explicit and avoid unnecessary prune commands
+  * Updated boring file to ignore generated TLS certificates
+  * Explicitly use python2 in shebang lines
+  * Split the debian dependencies one per line for readability
+  * Removed no longer needed debian pycompat and pyversions files
+  * Removed no longer needed debian version dependency restrictions
+  * Removed no longer needed debian dirs file
+  * Increased debian compatibility level to 11
+  * Updated debian python build system
+  * Fixed permissions for debian installed configuration file
+  * Silenced lintian warning about missing manual page
+  * Switched from the init script to a systemd service file
+  * Updated debian uploaders
+  * Removed no longer needed debian dependency on lsb-base
+  * Removed unnecessary package name prefixes from some debian files
+  * Install TLS files in /usr/share/msrprelay/tls for the debian package
+  * Install README and setup instructions in debian package docs directory
+  * Create an empty /etc/msrprelay/tls/ directory in the debian package
+  * Removed commented out variable in debian rules
 
- -- Adrian Georgescu <ag@ag-projects.com>  Sun, 03 Nov 2019 09:41:10 -0300
+
+ -- Dan Pascu <dan@ag-projects.com>  Fri, 07 Feb 2020 17:48:51 +0200
 
 msrprelay (1.2.2) unstable; urgency=medium
 
