@@ -18,3 +18,4 @@ echo "signing_key" >> ${1}.tmpl
 echo "expiration_days = 10000" >>${1}.tmpl
 certtool --generate-certificate --load-privkey msrprelay.key --generate-self-signed --template ${1}.tmpl --outfile msrprelay.crt
 rm ${1}.tmpl
+

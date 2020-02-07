@@ -15,3 +15,4 @@ echo "cert_signing_key" >> ca.tmpl
 echo "expiration_days = 10000" >>ca.tmpl
 certtool --generate-self-signed --load-privkey ca.key --template ca.tmpl --outfile ca.crt
 rm ca.tmpl
+
