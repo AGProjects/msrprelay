@@ -36,9 +36,10 @@ msrprelay (1.3.0) unstable; urgency=medium
   * Install README and setup instructions in debian package docs directory
   * Create an empty /etc/msrprelay/tls/ directory in the debian package
   * Removed commented out variable in debian rules
+  * Increased debian standards version to 4.5.0
+  * Updated copyright years
 
-
- -- Dan Pascu <dan@ag-projects.com>  Fri, 07 Feb 2020 17:48:51 +0200
+ -- Dan Pascu <dan@ag-projects.com>  Fri, 14 Feb 2020 13:57:52 +0200
 
 msrprelay (1.2.2) unstable; urgency=medium
 
