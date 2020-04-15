@@ -69,9 +69,9 @@ class ThorNetworkService(EventServiceClient):
         credentials.verify_peer = True
         tls_context = TLSContext(credentials)
         EventServiceClient.__init__(self, ThorNetworkConfig.domain, tls_context)
-        process.signals.add_handler(signal.SIGHUP, self._handle_SIGHUP)
-        process.signals.add_handler(signal.SIGINT, self._handle_SIGINT)
-        process.signals.add_handler(signal.SIGTERM, self._handle_SIGTERM)
+        process.signals.add_handler(signal.SIGHUP, self._handle_signal)
+        process.signals.add_handler(signal.SIGINT, self._handle_signal)
+        process.signals.add_handler(signal.SIGTERM, self._handle_signal)
 
     def handle_event(self, event):
         # print "Received event: %s" % event
