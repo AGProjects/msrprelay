@@ -2,23 +2,13 @@
 Installation
 ------------
 
-For Debian testing or unstable there is an official public repository
-provided by AG Projects. Install the AG Projects debian software signing
-key:
+For Debian packages go to:
 
-wget http://download.ag-projects.com/agp-debian-gpg.key
-apt-key add agp-debian-gpg.key
+https://docs-new.sipthor.net/w/debian_package_repositories/
 
-Add these lines in etc/apt/sources.list
+sduo apt-get update
+sudo apt-get install msrprelay
 
-# AG Projects software
-deb http://ag-projects.com/debian unstable main
-deb-src http://ag-projects.com/debian unstable main
-
-After that, run:
-
-apt-get update
-apt-get install msrprelay
 
 If you have installed the debian package you can skip forward to the
 'Configure the server' section.
@@ -37,12 +27,11 @@ distribution.
 
 The software has the following dependencies:
 
- * Python >=2.5 http://python.org
- * Twisted >=2.5.0 http://twistedmatrix.com
- * GnuTLS >=2.4.1 http://www.gnu.org/software/gnutls/
- * python-gnutls >=1.1.8 http://pypi.python.org/pypi/python-gnutls/
- * python-application >=1.2.8 http://pypi.python.org/pypi/python-application
- * SQLObject >= 0.10.2 http://sqlobject.org
+ * Python 3
+ * Twisted
+ * SQLObject
+ * python3-application http://download.ag-projects.com/SipSimpleSDK/Python3/
+ * python-gnutls http://download.ag-projects.com/SipSimpleSDK/Python3/
 
 
 Download and install MSRPRelay
@@ -58,7 +47,8 @@ the newly created msrprelay directory.
 The source code is managed using darcs version control tool. The darcs
 repository can be fetched with:
 
-darcs get http://devel.ag-projects.com/repositories/msrprelay
+darcs clone http://devel.ag-projects.com/repositories/msrprelay
+
 
 To obtain the incremental changes after the initial get, go to the msrprelay
 directory and run:
@@ -69,7 +59,7 @@ darcs pull -a
 Install the software:
 
 cd msrprelay
-python setup.py install
+python3 setup.py install
 
 
 Configure the server
@@ -119,13 +109,13 @@ Running the server
 
 Start the MSRPRelay, either by executing:
 
-./msrprelay --no-fork
+sudo ./msrprelay --no-fork
 
 or as a daemon, which is the default behaviour.
 
-This can also be done using the init.d script:
+This can also be done using the systemd script:
 
-/etc/init.d/msrprelay start
+sudo systemctl start msrprelay
 
 When started as a deamon MSRPRelay will log its messages to syslog.
 
