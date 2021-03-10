@@ -10,7 +10,7 @@ from application.configuration.datatypes import NetworkAddress, LogLevel
 from application.python.types import Singleton
 from application.system import host
 
-from zope.interface import implements
+from zope.interface import implementer
 from twisted.internet.defer import maybeDeferred
 from twisted.internet import reactor
 from twisted.internet.protocol import Factory, ClientFactory
@@ -46,9 +46,7 @@ class RelayConfig(ConfigSection):
     log_level = ConfigSetting(type=LogLevel, value=log.level.DEBUG)
 
 
-class Relay(object):
-    __metaclass__ = Singleton
-
+class Relay(object, metaclass=Singleton):
     def __init__(self):
         self.unbound_sessions = {}
         self._do_init()
@@ -72,7 +70,7 @@ class Relay(object):
                         return hostname.endswith(pattern[1:])
                     else:
                         return hostname == pattern
-                if not any(matches(self.hostname, name) for name in RelayConfig.certificate.alternative_names.dns):
+                if not any(matches(self.hostname, name.decode()) for name in RelayConfig.certificate.alternative_names.dns):
                     raise RuntimeError('The specified MSRP Relay hostname "%s" is not set as DNS subject alternative name in the TLS certificate.' % self.hostname)
         elif not RelayConfig.debug_notls:
             self.hostname = RelayConfig.certificate.alternative_names.dns[0] # Just grab the first one?
@@ -99,7 +97,7 @@ class Relay(object):
         if not self.listener:
             try:
                 self._do_init()
-            except RuntimeError, e:
+            except RuntimeError as e:
                 log.critical('Error reloading configuration file: %s' % e)
                 reactor.stop()
         else:
@@ -245,8 +243,8 @@ class PeerLogger(log.ContextualLogger):
 #                   +--------------+
 
 
+@implementer(IPullProducer)
 class Peer(object):
-    implements(IPullProducer)
 
     def __init__(self, session = None, protocol = None, path = None, other_peer = None):
         self.session = session
@@ -317,7 +315,7 @@ class Peer(object):
             self.forwarding_data = None
 
     def connection_lost(self, reason):
-        self.logger.debug('Connection lost: %s', reason)
+        self.logger.debug('Connection with %s lost: %s' % (self.other_peer, reason))
         if self.invalid_timer and self.invalid_timer.active():
             self.invalid_timer.cancel()
             self.invalid_timer = None
@@ -333,7 +331,7 @@ class Peer(object):
     # called by ConnectingFactory
 
     def connection_failed(self, reason):
-        self.logger.warning('Connection failed: %s', reason)
+        self.logger.warning('Connection with %s failed: %s' % (self.other_peer, reason))
         if self.state == "CONNECTING":
             self.other_peer.disconnect()
         self._cleanup()
@@ -357,7 +355,7 @@ class Peer(object):
     def _unbound_peer_data(self, msrpdata):
         try:
             msrpdata.verify_headers()
-        except ParsingError, e:
+        except ParsingError as e:
             if isinstance(e, HeaderParsingError) and (e.header == "To-Path" or e.header == "From-Path"):
                 self.logger.warning('Cannot send error response, path headers unreadable')
                 return
@@ -392,7 +390,7 @@ class Peer(object):
             realm = msrpdata.headers["To-Path"].decoded[0].host
         else:
             realm = RelayConfig.default_domain
-        if not msrpdata.headers.has_key("Authorization"):
+        if "Authorization" not in msrpdata.headers:
             # If the Authorization header is not present generate challenge data and respond.
             www_authenticate = auth_challenger.generate_www_authenticate(realm, self.protocol.transport.getPeer().host)
             raise ResponseUnauthenticated(msrpdata, headers = [WWWAuthenticateHeader(www_authenticate)])
@@ -405,7 +403,7 @@ class Peer(object):
             try:
                 username = authorization["username"]
                 session_id = authorization["nonce"]
-            except KeyError, e:
+            except KeyError as e:
                 raise ResponseUnauthorized(msrpdata, "%s field not present in Authorization header" % e.args[0])
             if self.relay.backend.cleartext_passwords:
                 result = self.relay.backend.retrieve_password(username, realm)
@@ -434,7 +432,7 @@ class Peer(object):
 
     def _cb_login_success(self, authentication_info, msrpdata, session_id, username, realm):
         # Check the Expires header, if present.
-        if msrpdata.headers.has_key("Expires"):
+        if "Expires" in msrpdata.headers:
             expire = msrpdata.headers["Expires"].decoded
             if expire < RelayConfig.session_expiration_time_minimum:
                 raise ResponseOutOfBounds(msrpdata, headers = [MinExpiresHeader(RelayConfig.session_expiration_time_minimum)])
@@ -481,7 +479,7 @@ class Peer(object):
         try:
             try:
                 msrpdata.verify_headers()
-            except ParsingError, e:
+            except ParsingError as e:
                 if isinstance(e, HeaderParsingError) and (e.header == "To-Path" or e.header == "From-Path"):
                     self.logger.error('Cannot send error response, path headers unreadable')
                     return
@@ -498,7 +496,7 @@ class Peer(object):
                 if uri != self.path[index]:
                     raise ResponseNoSession(msrpdata, "From-Path does not match session source")
             if msrpdata.method == "AUTH":
-                if msrpdata.headers.has_key("Expires"):
+                if "Expires" in msrpdata.headers:
                     expire = msrpdata.headers["Expires"].decoded
                     if expire < RelayConfig.session_expiration_time_minimum:
                         raise ResponseOutOfBounds(msrpdata, headers=[MinExpiresHeader(RelayConfig.session_expiration_time_minimum)])
@@ -529,9 +527,9 @@ class Peer(object):
                     if uri != self.other_peer.path[index]:
                         raise ResponseNoSession(msrpdata, "To-Path does not match session destination")
             if msrpdata.method == "SEND":
-                if not msrpdata.headers.has_key("Message-ID"):
+                if "Message-ID" not in msrpdata.headers:
                     raise ResponseUnintelligible(msrpdata, "SEND received without Message-ID")
-                if not msrpdata.headers.has_key("Byte-Range"):
+                if "Byte-Range" not in msrpdata.headers:
                     raise ResponseUnintelligible(msrpdata, "SEND received without Byte-Range")
             if msrpdata.method is None:    # we got a response
                 if msrpdata.transaction_id in self.other_peer.send_transactions:
@@ -564,7 +562,7 @@ class Peer(object):
                 from_path = copy(msrpdata.headers["From-Path"].decoded)
                 from_path.appendleft(to_path.popleft())
                 forward = MSRPData(generate_transaction_id(), method=msrpdata.method)
-                for header in msrpdata.headers.itervalues():
+                for header in msrpdata.headers.values():
                     forward.add_header(MSRPHeader(header.name, header.encoded))
                 forward.add_header(ToPathHeader(to_path))
                 forward.add_header(FromPathHeader(from_path))
@@ -581,7 +579,7 @@ class Peer(object):
                     self.other_transactions[self.forwarding_data.msrpdata_forward.transaction_id] = (self.forwarding_data, None)
             else:
                 raise ResponseUnknownMethod(msrpdata)
-        except ResponseException, e:
+        except ResponseException as e:
             if msrpdata.method is None:
                 self.logger.debug('Caught exception to response: %s (%s)', e.__class__.__name__, e.data.comment)
                 return
@@ -638,13 +636,13 @@ class Peer(object):
             self.connector.disconnect()
             self.state = "DISCONNECTED"
         elif self.state == "ESTABLISHED":
-            for forwarding_data, timer in self.send_transactions.itervalues():
+            for forwarding_data, timer in self.send_transactions.values():
                 if timer is not None:
                     timer.cancel()
                 report = generate_report(ResponseDownstreamTimeout.code, forwarding_data, reason="Session got disconnected")
                 self.enqueue(report.encode())
             self.send_transactions.clear()
-            for _, timer in self.other_transactions.itervalues():
+            for _, timer in self.other_transactions.values():
                 if timer is not None:
                     timer.cancel()
             self.other_transactions.clear()
@@ -659,11 +657,11 @@ class Peer(object):
         self.other_peer = None
         self.protocol = None
         self.relay = None
-        for _, timer in self.send_transactions.itervalues():
+        for _, timer in self.send_transactions.values():
             if timer is not None and timer.active():
                 timer.cancel()
         self.send_transactions.clear()
-        for _, timer in self.other_transactions.itervalues():
+        for _, timer in self.other_transactions.values():
             if timer is not None and timer.active():
                 timer.cancel()
         self.other_transactions.clear()
@@ -763,6 +761,7 @@ class Peer(object):
         pass
 
     def _send_payload(self, data):
+        data = data.encode()
         if self.session is not None:
             if self is self.session.source:
                 self.session.upstream_bytes += len(data)

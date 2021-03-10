@@ -1,5 +1,5 @@
 
-import cjson
+import json
 import signal
 
 from application import log
@@ -20,6 +20,15 @@ from thor.eventservice import EventServiceClient, ThorEvent
 from thor.entities import ThorEntitiesRoleMap, GenericThorEntity as ThorEntity
 from thor.tls import X509NameValidator
 
+
+class ThorEntityAddress(bytes):
+    def __new__(cls, ip, control_port=None, version='unknown'):
+        instance = super().__new__(cls, ip.encode('utf-8'))
+        instance.ip = ip
+        instance.version = version
+        instance.control_port = control_port
+        return instance
+        
 
 class Config(ConfigSection):
     __cfgfile__ = configuration_file
@@ -56,8 +65,7 @@ class Subscribers(SQLObject):
 sqlhub.processConnection = connectionForURI(Config.uri)
 
 
-class ThorNetworkService(EventServiceClient):
-    __metaclass__ = Singleton
+class ThorNetworkService(EventServiceClient, metaclass=Singleton):
     topics = ["Thor.Members"]
 
     def __init__(self):
@@ -84,7 +92,8 @@ class ThorNetworkService(EventServiceClient):
                 from thor import network as thor_network
                 network = thor_network.new(Config.multiply)
                 networks[role] = network
-            new_nodes = set([node.ip for node in role_map.get(role, [])])
+            new_nodes = set([ThorEntityAddress(node.ip, getattr(node, 'control_port', None), getattr(node, 'version', 'unknown')) for node in role_map.get(role, [])])
+            
             old_nodes = set(network.nodes)
             added_nodes = new_nodes - old_nodes
             removed_nodes = old_nodes - new_nodes
@@ -92,13 +101,12 @@ class ThorNetworkService(EventServiceClient):
                 for node in removed_nodes:
                     network.remove_node(node)
                 plural = len(removed_nodes) != 1 and 's' or ''
-                log.info('removed %s node%s: %s', role, plural, ', '.join(removed_nodes))
+                log.info("removed %s node%s: %s" % (role, plural, ', '.join([node.decode() for node in removed_nodes])))
             if added_nodes:
                 for node in added_nodes:
                     network.add_node(node)
                 plural = len(added_nodes) != 1 and 's' or ''
-                log.info('added %s node%s: %s', role, plural, ', '.join(added_nodes))
-            # print "Thor %s nodes: %s" % (role, str(network.nodes))
+                log.info('added %s node%s: %s' % (role, plural, ', '.join([node.decode() for node in added_nodes])))
 
 
 class Checker(object):
@@ -114,8 +122,8 @@ class Checker(object):
         except SQLObjectError:
             raise LoginFailed("Database error")
         try:
-            profile = cjson.decode(subscriber.profile)
-        except cjson.DecodeError:
+            profile = json.loads(subscriber.profile)
+        except ValueError:
             raise LoginFailed("Database JSON error")
         try:
             return profile[col]

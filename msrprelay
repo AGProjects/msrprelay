@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/env python3
 
 """MSRP Relay"""
 
@@ -45,7 +45,7 @@ if __name__ == '__main__':
     elif options.fork:
         try:
             process.daemonize(pidfile='{}.pid'.format(name))
-        except ProcessError, e:
+        except ProcessError as e:
             log.critical('Cannot start %s: %s' % (fullname, e))
             sys.exit(1)
         log.use_syslog(name)
@@ -69,7 +69,7 @@ if __name__ == '__main__':
 
     try:
         relay = Relay()
-    except Exception, e:
+    except Exception as e:
         log.critical('Failed to create %s: %s' % (fullname, e))
         if e.__class__ is not RuntimeError:
             log.exception()
@@ -79,7 +79,7 @@ if __name__ == '__main__':
 
     try:
         relay.run()
-    except Exception, e:
+    except Exception as e:
         log.critical('Failed to run %s: %s' % (fullname, e))
         if e.__class__ is not RuntimeError:
             log.exception()

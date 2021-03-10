@@ -47,7 +47,7 @@ class MSRPFileReceiverFactory(ClientFactory):
 
     def write_chunk(self, data):
         self.byte_count += len(data)
-        print "received %d of %d bytes" % (self.byte_count, self.bytes_expected)
+        print("received %d of %d bytes" % (self.byte_count, self.bytes_expected))
         if self.do_on_data:
             self.do_on_data(data)
 
@@ -56,10 +56,10 @@ class MSRPFileReceiverFactory(ClientFactory):
             self.do_on_end(continuation)
 
     def connection_lost(self, reason):
-        print "Connection lost!"
+        print("Connection lost!")
 
     def _send_auth1(self):
-        print "Sending initial AUTH"
+        print("Sending initial AUTH")
         msrpdata = MSRPData(generate_transaction_id(), method = "AUTH")
         msrpdata.add_header(ToPathHeader([self.relay_uri]))
         msrpdata.add_header(FromPathHeader([self.uri]))
@@ -67,7 +67,7 @@ class MSRPFileReceiverFactory(ClientFactory):
         self.do_on_start = self._send_auth2
 
     def _send_auth2(self, msrpdata):
-        print "Got challenge, sending response AUTH"
+        print("Got challenge, sending response AUTH")
         auth, rsp_auth = process_www_authenticate(self.username, self.password, "AUTH", str(self.relay_uri), **msrpdata.headers["WWW-Authenticate"].decoded)
         msrpdata = MSRPData(generate_transaction_id(), method = "AUTH")
         msrpdata.add_header(ToPathHeader([self.relay_uri]))
@@ -78,19 +78,19 @@ class MSRPFileReceiverFactory(ClientFactory):
 
     def _get_path(self, msrpdata):
         if msrpdata.code != 200:
-            print "Failed to authenticate!"
+            print("Failed to authenticate!")
             if msrpdata.comment:
-                print msrpdata.comment
+                print(msrpdata.comment)
             self.protocol.transport.loseConnection()
             return
         sdp_path = list(reversed(msrpdata.headers["Use-Path"].decoded)) + [self.uri]
-        print "Path to send in SDP:\n%s" % " ".join(str(uri) for uri in sdp_path)
-        self.full_to_path = " ".join(str(uri) for uri in msrpdata.headers["Use-Path"].decoded) + " " + raw_input("Destination path: ")
+        print("Path to send in SDP:\n%s" % " ".join(str(uri) for uri in sdp_path))
+        self.full_to_path = " ".join(str(uri) for uri in msrpdata.headers["Use-Path"].decoded) + " " + input("Destination path: ")
         self.do_on_start = self._start_time
 
     def _start_time(self, msrpdata):
         filename = msrpdata.headers["Content-Disposition"].decoded[1]["filename"]
-        print 'Receiving file "%s"' % filename
+        print('Receiving file "%s"' % filename)
         self.outfile= open(msrpdata.headers["Content-Disposition"].decoded[1]["filename"], "wb")
         self.start_time = time.time()
         total = msrpdata.headers["Byte-Range"].decoded[2]
@@ -108,28 +108,28 @@ class MSRPFileReceiverFactory(ClientFactory):
             duration = time.time() - self.start_time
             speed = self.byte_count / duration / 1024
             if self.byte_count == self.bytes_expected:
-                print "File transfer completed successfully."
+                print("File transfer completed successfully.")
             else:
-                print "File transfer aborted prematurely!"
-            print "Received %d bytes in %.0f seconds, (%.2f kb/s)" % (self.byte_count, duration, speed)
+                print("File transfer aborted prematurely!")
+            print("Received %d bytes in %.0f seconds, (%.2f kb/s)" % (self.byte_count, duration, speed))
             self.protocol.transport.loseConnection()
 
     def clientConnectionFailed(self, connector, err):
-        print "Connection failed"
-        print err.value
+        print("Connection failed")
+        print(err.value)
         reactor.callLater(0, reactor.stop)
 
     def clientConnectionLost(self, connector, err):
-        print "Connection lost"
-        print err.value
+        print("Connection lost")
+        print(err.value)
         reactor.callLater(0, reactor.stop)
 
 if __name__ == "__main__":
     if len(sys.argv) < 2 or len(sys.argv) > 4:
-        print "Usage: %s user@domain [relay-hostname [relay-port]]" % sys.argv[0]
-        print "If the hostname and port are not specified, the MSRP relay will be discovered"
-        print "through the the _msrps._tcp.domain SRV record. If a hostname is specified but"
-        print "no port, the default port of 2855 will be used."
+        print("Usage: %s user@domain [relay-hostname [relay-port]]" % sys.argv[0])
+        print("If the hostname and port are not specified, the MSRP relay will be discovered")
+        print("through the the _msrps._tcp.domain SRV record. If a hostname is specified but")
+        print("no port, the default port of 2855 will be used.")
     else:
         username, domain = sys.argv[1].split("@", 1)
         cred = X509Credentials(None, None)

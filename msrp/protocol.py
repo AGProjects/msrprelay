@@ -40,9 +40,7 @@ def _auth_header_quote(name, value, header_name):
     else:
         return '"%s"' % value
 
-class MSRPHeader(object):
-    __metaclass__ = MSRPHeaderMeta
-
+class MSRPHeader(object, metaclass=MSRPHeaderMeta):
     def __new__(cls, name, value):
         if isinstance(value, str) and name in MSRPHeaderMeta.header_classes:
             cls = eval(MSRPHeaderMeta.header_classes[name])
@@ -144,7 +142,7 @@ class DigestHeader(MSRPNamedHeader):
         return param_dict
 
     def _encode(self, decoded):
-        return "Digest " + ", ".join(['%s=%s' % (name, _auth_header_quote(name, value, self.name)) for name, value in decoded.iteritems()])
+        return "Digest " + ", ".join(['%s=%s' % (name, _auth_header_quote(name, value, self.name)) for name, value in decoded.items()])
 
 class ToPathHeader(URIHeader):
     name = "To-Path"
@@ -262,7 +260,7 @@ class AuthenticationInfoHeader(MSRPNamedHeader):
         return param_dict
 
     def _encode(self, decoded):
-        return ", ".join(['%s=%s' % (name, _auth_header_quote(name, value, self.name)) for name, value in decoded.iteritems()])
+        return ", ".join(['%s=%s' % (name, _auth_header_quote(name, value, self.name)) for name, value in decoded.items()])
 
 class ContentTypeHeader(MSRPNamedHeader):
     name = "Content-Type"
@@ -287,7 +285,7 @@ class ContentDispositionHeader(MSRPNamedHeader):
 
     def _encode(self, decoded):
         disposition, parameters = decoded
-        return ";".join([disposition] + ["%s=%s" % pair for pair in parameters.iteritems()])
+        return ";".join([disposition] + ["%s=%s" % pair for pair in parameters.items()])
 
 class MSRPData(object):
     def __init__(self, transaction_id, method=None, code=None, comment=None, data=''):
@@ -314,9 +312,9 @@ class MSRPData(object):
         try: # Decode To-/From-path headers first to be able to send responses
             self.headers["To-Path"].decoded
             self.headers["From-Path"].decoded
-        except KeyError, e:
+        except KeyError as e:
             raise HeaderParsingError(e.args[0])
-        for header in self.headers.itervalues():
+        for header in self.headers.values():
             header.decoded
 
     @property
@@ -342,9 +340,9 @@ class MSRPData(object):
         headers = self.headers.copy()
         data.append("To-Path: %s" % headers.pop("To-Path").encoded)
         data.append("From-Path: %s" % headers.pop("From-Path").encoded)
-        for hnameval in [(hname, headers.pop(hname).encoded) for hname in headers.keys() if not hname.startswith("Content-")]:
+        for hnameval in [(hname, headers.pop(hname).encoded) for hname in list(headers.keys()) if not hname.startswith("Content-")]:
             data.append("%s: %s" % hnameval)
-        for hnameval in [(hname, headers.pop(hname).encoded) for hname in headers.keys() if hname != "Content-Type"]:
+        for hnameval in [(hname, headers.pop(hname).encoded) for hname in list(headers.keys()) if hname != "Content-Type"]:
             data.append("%s: %s" % hnameval)
         if len(headers) > 0:
             data.append("Content-Type: %s" % headers["Content-Type"].encoded)
@@ -360,7 +358,7 @@ class MSRPData(object):
 
     def clone(self):
         other = self.__class__(self.transaction_id, self.method, self.code, self.comment, self.data)
-        for header in self.headers.itervalues():
+        for header in self.headers.values():
             other.add_header(header.clone())
         return other
 
@@ -381,15 +379,20 @@ class MSRPProtocol(LineReceiver):
         self.peer = self.factory.get_peer(self)
 
     def lineReceived(self, line):
+        try:
+            decoded_line = line.decode('utf-8')
+        except UnicodeDecodeError:
+            decoded_line = None
+            
         if self.data:
             if len(line) == 0:
                 self.term_buf_len = 12 + len(self.data.transaction_id)
-                self.term_buf = ""
+                self.term_buf = b""
                 self.term = re.compile("^(.*)\r\n-------%s([$#+])\r\n(.*)$" % re.escape(self.data.transaction_id), re.DOTALL)
                 self.peer.data_start(self.data)
                 self.setRawMode()
             else:
-                match = self.term.match(line)
+                match = self.term.match(decoded_line) if decoded_line else None
                 if match:
                     continuation = match.group(1)
                     self.peer.data_start(self.data)
@@ -401,14 +404,14 @@ class MSRPProtocol(LineReceiver):
                         self._reset()
                         return
                     try:
-                        hname, hval = line.split(": ", 2)
+                        name, value = decoded_line.split(": ", 2)
                     except ValueError:
                         return # let this pass silently, we'll just not read this line
                     else:
-                        self.data.add_header(MSRPHeader(hname, hval))
+                        self.data.add_header(MSRPHeader(name, value))
         else: # we received a new message
             try:
-                msrp, transaction_id, rest = line.split(" ", 2)
+                msrp, transaction_id, rest = decoded_line.split(" ", 2)
             except ValueError:
                 return # drop connection?
             if msrp != "MSRP":
@@ -432,7 +435,8 @@ class MSRPProtocol(LineReceiver):
 
     def rawDataReceived(self, data):
         match_data = self.term_buf + data
-        match = self.term.match(match_data)
+        match = self.term.match(match_data.decode())
+
         if match: # we got the last data for this message
             contents, continuation, extra = match.groups()
             contents = contents[len(self.term_buf):]
@@ -502,7 +506,7 @@ class URI(object):
         if self.session_id:
             uri_str.extend(["/", self.session_id])
         uri_str.extend([";", self.transport])
-        for key, value in self.parameters.iteritems():
+        for key, value in self.parameters.items():
             uri_str.extend([";", key, "=", value])
         return "".join(uri_str)
 

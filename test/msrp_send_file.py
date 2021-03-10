@@ -52,7 +52,7 @@ class MSRPFileSenderFactory(ClientFactory):
 
     def write_chunk(self, data):
         self.byte_count += len(data)
-        print "received %d bytes, total %d" % (len(data), self.byte_count)
+        print("received %d bytes, total %d" % (len(data), self.byte_count))
         if self.do_on_data:
             self.do_on_data(data)
 
@@ -61,16 +61,16 @@ class MSRPFileSenderFactory(ClientFactory):
             self.do_on_end(continuation)
 
     def connection_lost(self, reason):
-        print "Connection lost!"
+        print("Connection lost!")
         if self.complete:
             duration = time.time() - self.start_time
             speed = self.file_size / duration / 1024
-            print "Sent %d bytes in %.0f seconds, (%.2f kb/s)" % (self.file_size, duration, speed)
+            print("Sent %d bytes in %.0f seconds, (%.2f kb/s)" % (self.file_size, duration, speed))
         else:
-            print "File transfer was aborted prematurely."
+            print("File transfer was aborted prematurely.")
 
     def _send_auth1(self):
-        print "Sending initial AUTH"
+        print("Sending initial AUTH")
         msrpdata = MSRPData(generate_transaction_id(), method = "AUTH")
         msrpdata.add_header(ToPathHeader([self.relay_uri]))
         msrpdata.add_header(FromPathHeader([self.uri]))
@@ -78,7 +78,7 @@ class MSRPFileSenderFactory(ClientFactory):
         self.do_on_start = self._send_auth2
 
     def _send_auth2(self, msrpdata):
-        print "Got challenge, sending response AUTH"
+        print("Got challenge, sending response AUTH")
         auth, rsp_auth = process_www_authenticate(self.username, self.password, "AUTH", str(self.relay_uri), **msrpdata.headers["WWW-Authenticate"].decoded)
         msrpdata = MSRPData(generate_transaction_id(), method = "AUTH")
         msrpdata.add_header(ToPathHeader([self.relay_uri]))
@@ -89,15 +89,15 @@ class MSRPFileSenderFactory(ClientFactory):
 
     def _get_path(self, msrpdata):
         if msrpdata.code != 200:
-            print "Failed to authenticate!"
+            print("Failed to authenticate!")
             if msrpdata.comment:
-                print msrpdata.comment
+                print(msrpdata.comment)
             self.protocol.transport.loseConnection()
             return
         sdp_path = list(reversed(msrpdata.headers["Use-Path"].decoded)) + [self.uri]
-        print "Path to send in SDP:\n%s" % " ".join(str(uri) for uri in sdp_path)
-        self.full_to_path = " ".join(str(uri) for uri in msrpdata.headers["Use-Path"].decoded) + " " + raw_input("Destination path: ")
-        print 'Starting transmission of "%s"' % self.filename
+        print("Path to send in SDP:\n%s" % " ".join(str(uri) for uri in sdp_path))
+        self.full_to_path = " ".join(str(uri) for uri in msrpdata.headers["Use-Path"].decoded) + " " + input("Destination path: ")
+        print('Starting transmission of "%s"' % self.filename)
         self.do_on_start = None
         self.infile.seek(0, 2)
         self.file_size = self.infile.tell()
@@ -114,30 +114,30 @@ class MSRPFileSenderFactory(ClientFactory):
         self.protocol.transport.write(msrpdata.encode_start())
         sent = 0
         for i in range(0, self.file_size, BLOCK_SIZE):
-            print "sent %d of %d bytes" % (sent, self.file_size)
+            print("sent %d of %d bytes" % (sent, self.file_size))
             sent += i
             data = self.infile.read(BLOCK_SIZE)
             self.protocol.transport.write(data)
-        print "File transfer completed."
+        print("File transfer completed.")
         self.complete = True
         self.protocol.transport.write(msrpdata.encode_end("$"))
 
     def clientConnectionFailed(self, connector, err):
-        print "Connection failed"
-        print err.value
+        print("Connection failed")
+        print(err.value)
         reactor.callLater(0, reactor.stop)
 
     def clientConnectionLost(self, connector, err):
-        print "Connection lost"
-        print err.value
+        print("Connection lost")
+        print(err.value)
         reactor.callLater(0, reactor.stop)
 
 if __name__ == "__main__":
     if len(sys.argv) < 3 or len(sys.argv) > 5:
-        print "Usage: %s infile user@domain [relay-hostname [relay-port]]" % sys.argv[0]
-        print "If the hostname and port are not specified, the MSRP relay will be discovered"
-        print "through the the _msrps._tcp.domain SRV record. If a hostname is specified but"
-        print "no port, the default port of 2855 will be used."
+        print("Usage: %s infile user@domain [relay-hostname [relay-port]]" % sys.argv[0])
+        print("If the hostname and port are not specified, the MSRP relay will be discovered")
+        print("through the the _msrps._tcp.domain SRV record. If a hostname is specified but")
+        print("no port, the default port of 2855 will be used.")
     else:
         filename = sys.argv[1]
         infile = open(filename, "rb")

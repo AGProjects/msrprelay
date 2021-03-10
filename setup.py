@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/env python3
 
 import msrp
 import os
@@ -14,7 +14,7 @@ setup(
     name='msrprelay',
     version=msrp.__version__,
 
-    description='A MSRP Relay.',
+    description='Python implementation of MSRP Relay (RFC4976)',
     url='http://msrprelay.org/',
 
     author='AG Projects',
@@ -23,7 +23,7 @@ setup(
 
     platforms=['Platform Independent'],
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production',
         'Intended Audience :: Service Providers',
         'License :: OSI Approved :: GNU General Public License (GPL)',
         'Operating System :: OS Independent',

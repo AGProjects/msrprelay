@@ -1,18 +1,25 @@
 These scripts provide two ways to generate a certificate:
 
+
 CA method
 ---------
+
 - Generate a self-signed CA certificate and key pair using:
+
   ./gen_ca_creds.sh <ca-common_name>.
-- Use the CA certificate and key pair to generate a relay certificate and key
-  pair:
+
+- Use the CA certificate and key pair to generate a relay 
+  certificate and key pair:
+
   ./gen_relay_creds_ca.sh <msrp-relay-hostname>
 
 The CA certificate could then be handed to the client and used for
 certificate verification.
 
+
 Self-signed method
 ------------------
+
 - Generate a self-signed certificate and key pair:
   ./gen_relay_creds_self.sh <msrp-relay-hostname>
 

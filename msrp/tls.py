@@ -29,7 +29,7 @@ class Certificate(object):
         if isinstance(value, str):
             try:
                 return X509Certificate(file_content(value))
-            except Exception, e:
+            except Exception as e:
                 raise ValueError("Certificate file '%s' could not be loaded: %s" % (value, str(e)))
         else:
             raise TypeError('value should be a string')
@@ -42,7 +42,7 @@ class PrivateKey(object):
         if isinstance(value, str):
             try:
                 return X509PrivateKey(file_content(value))
-            except Exception, e:
+            except Exception as e:
                 raise ValueError("Private key file '%s' could not be loaded: %s" % (value, str(e)))
         else:
             raise TypeError('value should be a string')
