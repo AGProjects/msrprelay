@@ -34,12 +34,12 @@ The software has the following dependencies:
  * python-gnutls http://download.ag-projects.com/SipSimpleSDK/Python3/
 
 
-Download and install MSRPRelay
-------------------------------
+Download and install MSRP Relay
+-------------------------------
 
 The software can be downloaded as a tar archive from:
 
-http://download.ag-projects.com/MSRPRelay/
+http://download.ag-projects.com/MSRP/
 
 Extract it using tar xzvf msrprelay-version.tar.gz and change directory to
 the newly created msrprelay directory.
