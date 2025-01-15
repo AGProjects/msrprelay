@@ -482,8 +482,15 @@ class URI(object):
 
     def __init__(self, host, use_tls = False, user = None, port = None, session_id = None, transport = "tcp", parameters = None):
         self.use_tls = use_tls
-        self.user = user
-        self.host = host
+        try:
+            self.host = host.decode()
+        except (UnicodeDecodeError, AttributeError):
+            self.host = host
+
+        try:
+            self.user = user.decode()
+        except (UnicodeDecodeError, AttributeError):
+            self.user = user
         self.port = port
         self.session_id = session_id
         self.transport = transport
